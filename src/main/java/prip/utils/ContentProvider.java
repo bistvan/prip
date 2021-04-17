@@ -1,4 +1,4 @@
-package prip;
+package prip.utils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -56,7 +56,7 @@ public abstract class ContentProvider {
                 else
                     s = (String) m.invoke(o);
             } catch (IllegalAccessException | InvocationTargetException e) {
-                throw new RuntimeException(e);
+                throw new WrapperException(e);
             }
             return s;
         }

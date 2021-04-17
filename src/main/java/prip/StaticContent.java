@@ -1,12 +1,10 @@
 package prip;
 
-public class StaticContent {
-    @HtAction(path = "/")
-    public final Resource main = new Resource("/static/main.html");
+import prip.utils.ActionHolder;
+import prip.utils.HtAction;
+import prip.utils.Resource;
 
-    @HtAction(path = "/index.html")
-    public final Resource index = main;
-
+public class StaticContent implements ActionHolder {
     @HtAction(path = "/main.js")
     public final Resource mainJs = new Resource("/static/main.js");
 

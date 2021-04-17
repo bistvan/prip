@@ -1,4 +1,4 @@
-package prip;
+package prip.utils;
 
 /**
  * Handles the stream copy process.

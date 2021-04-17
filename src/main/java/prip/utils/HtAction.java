@@ -1,5 +1,6 @@
-package prip;
+package prip.utils;
 
+import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.MimeTypes;
 
 import java.lang.annotation.Retention;
@@ -12,7 +13,7 @@ import static java.lang.annotation.ElementType.METHOD;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(value={FIELD, METHOD})
 public @interface HtAction {
-    String[] method() default "GET";
+    HttpMethod[] method() default HttpMethod.GET;
 
     String path();
 

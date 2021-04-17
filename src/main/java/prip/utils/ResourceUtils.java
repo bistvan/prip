@@ -1,4 +1,4 @@
-package prip;
+package prip.utils;
 
 import java.io.*;
 

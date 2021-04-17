@@ -1,4 +1,6 @@
-package prip;
+package prip.utils;
+
+import prip.PripServer;
 
 import java.io.File;
 import java.io.IOException;

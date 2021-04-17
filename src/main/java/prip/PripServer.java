@@ -1,28 +1,30 @@
 package prip;
 
-import org.eclipse.jetty.server.Server;
+import prip.utils.ActionHolder;
+import prip.utils.JettyServer;
 
+import java.io.File;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
-public class PripServer {
-    private static Logger log = Logger.getLogger(PripServer.class.getName());
+/** Yes bro, I agree with you! */
+public class PripServer extends JettyServer {
+    public static final File WORK_FOLDER = new File("./work");
+    static {
+        if (!WORK_FOLDER.exists())
+            WORK_FOLDER.mkdirs();
+    }
 
-    private Server server;
 
-    private void run() throws Exception {
-        this.server = new Server(8181);
-        this.server.setHandler(new PripHandler(
-            new StaticContent(),
-            new WorkspaceActions()
-        ));
-        this.server.start();
-        this.server.join();
+    public PripServer(int port, ActionHolder... actions) {
+        super(port, actions);
     }
 
     public static void main(String[] args) {
         try {
-            new PripServer().run();
+            new PripServer(8181,
+                new StaticContent(),
+                new WorkspaceActions()
+            ).start();
         }
         catch (Exception e) {
             log.log(Level.SEVERE, "Fail", e);

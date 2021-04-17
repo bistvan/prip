@@ -1,4 +1,4 @@
-package prip;
+package prip.utils;
 
 import jakarta.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.http.MimeTypes;
@@ -19,6 +19,8 @@ public abstract class HttpAction {
             case TEXT_XML_UTF_8:
             case TEXT_JSON:
             case TEXT_JSON_UTF_8:
+            case APPLICATION_JSON:
+            case APPLICATION_JSON_UTF_8:
                 Class<?> ret = m.getReturnType();
                 if (String.class.isAssignableFrom(ret)) {
                     return new StringAction(new ContentProvider.StringMethod(m, o), mime);
@@ -37,6 +39,8 @@ public abstract class HttpAction {
             case TEXT_XML_UTF_8:
             case TEXT_JSON:
             case TEXT_JSON_UTF_8:
+            case APPLICATION_JSON:
+            case APPLICATION_JSON_UTF_8:
                 if (val instanceof String)
                     return new StringAction(new ContentProvider.StringConstant((String) val), mime);
                 if (val instanceof Resource)

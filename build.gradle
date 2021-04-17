@@ -12,6 +12,8 @@ repositories {
 dependencies {
     // https://mvnrepository.com/artifact/org.eclipse.jetty/jetty-server
     implementation group: 'org.eclipse.jetty', name: 'jetty-server', version: '11.0.2'
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.0.1'
     // https://mvnrepository.com/artifact/org.antlr/stringtemplate
     implementation group: 'org.antlr', name: 'stringtemplate', version: '4.0'
 
