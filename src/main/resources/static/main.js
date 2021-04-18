@@ -34,8 +34,17 @@ $(function() {
     var curWeek = function() {
         return addDay(curDay(), -curDay().getDay());
     }
+    var wsDay = function(d) { // workspace day
+        if (!def(d)) d = new Date();
+        for (var i = ws.days.length; --i >= 0;) {
+            var day = ws.days[i];
+            if (sameDay(day.date, d))
+                return day;
+        }
+        return null;
+    }
     var sameDay = function(d1, d2) {
-        return Math.trunc(d1.getTime() / 86400000) == Math.trunc(d2.getTime() / 86400000);
+        return d1.getYear() == d2.getYear() && d1.getMonth() == d2.getMonth() && d1.getDate() == d2.getDate();
     }
     var addDay = function(d, diff) {
         return new Date(d.getTime() + (diff * 86400000));
@@ -62,6 +71,24 @@ $(function() {
         return new Date(t).toISOString().slice(0, def(x) ? x : 10);
     }
 
+    var logWork = function(tid,sec,descr) {
+        if (def(tid)) {
+            var day = wsDay(curDay());
+            if (def(day)) {
+                var act = tid + ',' + (def(sec) ? sec : '') + ',' + descr.val();
+                descr.val('');
+                set('activities', def(day.activities) && day.activities.length > 0 ? day.activities + '\n' + act : act, day);
+                $('.rep-sum-d' + day.day + ' textarea').val(day.activities);
+                resetClock();
+            }
+            else {
+                alert('Cannot edit: ' + curDay());
+            }
+        }
+        else
+            alert('Task has no ID; Save first');
+    }
+
     var newTask = function(d, pre) {
         var t = $('<div class="col col-md-3"/>')[pre ? 'prependTo' : 'appendTo']('#current_tasks');
         var card = $('<div class="card shadow-sm c-task-box"/>').appendTo(t);
@@ -86,8 +113,14 @@ $(function() {
         var text = $('<input type=text class="form-control form-control-sm"  placeholder="Activity description"/>').appendTo(card);
         var ctrl = $('<div class="task-ctrl"/>').appendTo(card);
         var id = $('<span/>').text(def(d.id) ? '#' + d.id : '#NONE').appendTo(ctrl);
-        var logTime = $('<a href=# title="Log with time" class="log-with-time"/>').text('LogT').appendTo($('<span>').appendTo(ctrl));
-        var log = $('<a href=# title="Log without time" class="log"/>').text('Log').appendTo($('<span>').appendTo(ctrl));
+        var logTime = $('<a href=# title="Log with time" class="log-with-time"/>').text('LogT').appendTo($('<span>').appendTo(ctrl))
+            .click(function() {
+                logWork(d.id, def(ws.started) ? Math.trunc(((def(ws.stopped) ? ws.stopped : now()).getTime() - ws.started) / 1000) : null, text);
+            });
+        var log = $('<a href=# title="Log without time" class="log"/>').text('Log').appendTo($('<span>').appendTo(ctrl))
+            .click(function() {
+                logWork(d.id, null, text);
+            });
         var unpin = $('<a href=# title="Unpin this task" class="unpin"/>').text('Unpin').appendTo($('<span>').appendTo(ctrl))
             .click(function() {
                 if (def(d.id)) {
@@ -121,17 +154,27 @@ $(function() {
         var start = curWeek();
         for (var i = 1; i < 7; i++) {
             var date = addDay(start, i);
-            var t = $('<div class="col col-md-2"/>').appendTo('#report-sum');
-            if (sameDay(date, curDay()))
-                t.addClass('current-day');
-            var cd = dateStr(date);
-            var card = $('<div class="card shadow-sm c-report-sum"/>').appendTo(t);
-            var a = $('<a href=#/>').text(cd).attr('data-cd', cd).data('date', date).appendTo($('<div/>').appendTo(card))
-                .click(function() { loadWorkspace( $(this).data('date') ); });
-            var txt = $('<textarea/>').appendTo($('<div/>').appendTo(card));
+            var wday = wsDay(date);
+            if (!def(wday))
+                ws.days.push(wday = {date: date, activities:''});
+            wday.day = i;
+            showDaytask(date, wday);
         }
         $('#current-date').text(dateStr(curDay()));
         startStop(false);
+    }
+
+    var showDaytask = function(date, wday) {
+        var t = $('<div class="col col-md-2"/>').addClass('rep-sum-d' + wday.day).appendTo('#report-sum');
+        if (sameDay(date, curDay()))
+            t.addClass('current-day');
+        var cd = dateStr(date);
+        var card = $('<div class="card shadow-sm c-report-sum"/>').appendTo(t);
+        var a = $('<a href=#/>').text(cd).data('date', date).appendTo($('<div/>').appendTo(card))
+            .click(function() { loadWorkspace( $(this).data('date') ); });
+        var txt = $('<textarea/>').val(wday.activities).appendTo($('<div/>').appendTo(card)).change(function() {
+            set('activities', txt.val(), wday);
+        });
     }
 
     var loadWorkspace = function(date) {
@@ -145,6 +188,21 @@ $(function() {
             for (var i = d.days.length; --i >= 0;)
                 d.days[i].date = parseDate(d.days[i].date);
             ws = d;
+
+            $('#settings-panel input').each(function() {
+                var ed = $(this);
+                var id = ed.prop('id').substring(3);
+                if (ed.prop('type') == 'checkbox') {
+                    ed.prop('checked', def(ws[id]) && ws[id]).change(function() {
+                        set(id, ed.prop('checked'));
+                    });
+                }
+                else {
+                    ed.val(def(ws[id]) ? ws[id] : '').change(function() {
+                        set(id, ed.val());
+                    });
+                }
+            });
             showTasks(ws);
         });
     }
@@ -212,6 +270,13 @@ $(function() {
         tick();
     }
 
+    var resetClock = function() {
+        if (def(ws.started))
+            ws.started = now();
+        if (def(ws.stopped))
+            ws.stopped = now();
+    }
+
     var tick = function() {
         var t;
         var s = false;
@@ -240,6 +305,17 @@ $(function() {
         // date navigation
         $('#prev-week').click(function() { loadWorkspace(addDay(curDay(), -7)); })
         $('#next-week').click(function() { loadWorkspace(addDay(curDay(), 7)); })
+        $('#go-today').click(function() { loadWorkspace(now()); })
+        $('.fn-settings a').click(function() {
+            if ($("#settings-panel").css('display') == 'none') {
+                $("#settings-panel").show( 400 );
+                $(this).text('Close settings');
+            }
+            else {
+                $("#settings-panel").hide( 400 );
+                $(this).text('Settings');
+            }
+        });
     }
 
     guiInit();

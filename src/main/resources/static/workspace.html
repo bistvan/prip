@@ -26,15 +26,51 @@
                         <li class="nav-item fn-save-ws" style="display:none">
                             <a class="nav-link active" aria-current="page" href="#"><b>[ Save ]</b></a>
                         </li>
+                        <li class="nav-item fn-settings">
+                            <a class="nav-link active" aria-current="page" href="#">Settings</a>
+                        </li>
                     </ul>
                 </div>
             </div>
         </nav>
 
-        <div id="current_week" class="container">
-            <div>Workspace: $workspace$ / $now$</div>
+        <div class="container" id="settings-panel" style="display: none;">
+            <h2 class="pb-2 border-bottom">Settings</h2>
+            <div class="row g-3">
+                <div class="mb-3 col-sm-4">
+                    <label for="setdevName">Developer name</label>
+                    <input type="text" class="form-control" id="setdevName">
+                </div>
+                <div class="mb-3 col-sm-4">
+                    <label for="setsupervisor">Supervisor name</label>
+                    <input type="text" class="form-control" id="setsupervisor">
+                </div>
+                <div class="mb-3 col-sm-4">
+                    <input class="form-check-input" type="checkbox" value="" id="setautosave" checked>
+                    <label class="form-check-label" for="setautosave">
+                        Autosave (after 1 min)
+                    </label>
+                </div>
+                <div class="mb-3 col-sm-8">
+                    <label for="setjiraNumber">Jira number pattern</label>
+                    <input type="text" class="form-control" id="setjiraNumber">
+                </div>
+                <div class="mb-3 col-sm-4">
+                    <label for="setjiraUrl">Jira URL</label>
+                    <input type="text" class="form-control" id="setjiraUrl">
+                </div>
+                <div class="mb-3 col-sm-8">
+                    <label for="setgitHash">Git hash pattern</label>
+                    <input type="text" class="form-control" id="setgitHash">
+                </div>
+                <div class="mb-3 col-sm-4">
+                    <label for="setgitUrl">Git commit URL</label>
+                    <input type="text" class="form-control" id="setgitUrl">
+                </div>
 
+            </div>
         </div>
+
         <div class="container">
             <h2 class="pb-2 border-bottom">Active tasks</h2>
             <div id="ctrl" class="">
@@ -57,6 +93,9 @@
                 </p>
             </div>
             <div class="row g-3" id="report-sum"></div>
+        </div>
+        <div id="current_week" class="container">
+            <div>Workspace: $workspace$ / $now$ © 2021 atrido</div>
         </div>
 
     </main>

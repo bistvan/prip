@@ -1,5 +1,6 @@
 package prip.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import prip.PripServer;
 import prip.utils.*;
@@ -8,14 +9,21 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Workspace implements Jsonable {
     public static final List EMPTY = Arrays.asList();
     private static final HashMap<String, Workspace> CACHE = new HashMap<>();
 
     private String id;
+
+    private boolean autosave;
+    private String jiraNumber;
+    private String jiraUrl;
+    private String gitHash;
+    private String gitUrl;
+
     private int nextTaskId;
-    private String firstName;
-    private String lastName;
+    private String devName;
     private String supervisor;
     private Date current;
     private Date started;
@@ -36,12 +44,17 @@ public class Workspace implements Jsonable {
 
     public void update(Workspace ws) {
         this.id = ws.id;
-        this.firstName = ws.firstName;
-        this.lastName = ws.lastName;
+        this.devName = ws.devName;
         this.supervisor = ws.supervisor;
         this.started = ws.started;
         this.stopped = ws.stopped;
         this.current = ws.current;
+
+        this.autosave = ws.autosave;
+        this.jiraNumber = ws.jiraNumber;
+        this.jiraUrl = ws.jiraUrl;
+        this.gitHash = ws.gitHash;
+        this.gitUrl = ws.gitUrl;
     }
 
     public static Workspace getInstance(String id) {
@@ -119,20 +132,12 @@ public class Workspace implements Jsonable {
         this.nextTaskId = nextTaskId;
     }
 
-    public String getFirstName() {
-        return firstName;
+    public String getDevName() {
+        return devName;
     }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
+    public void setDevName(String devName) {
+        this.devName = devName;
     }
 
     public String getSupervisor() {
@@ -165,6 +170,46 @@ public class Workspace implements Jsonable {
 
     public void setStopped(Date stopped) {
         this.stopped = stopped;
+    }
+
+    public boolean isAutosave() {
+        return autosave;
+    }
+
+    public void setAutosave(boolean autosave) {
+        this.autosave = autosave;
+    }
+
+    public String getJiraNumber() {
+        return jiraNumber;
+    }
+
+    public void setJiraNumber(String jiraNumber) {
+        this.jiraNumber = jiraNumber;
+    }
+
+    public String getJiraUrl() {
+        return jiraUrl;
+    }
+
+    public void setJiraUrl(String jiraUrl) {
+        this.jiraUrl = jiraUrl;
+    }
+
+    public String getGitHash() {
+        return gitHash;
+    }
+
+    public void setGitHash(String gitHash) {
+        this.gitHash = gitHash;
+    }
+
+    public String getGitUrl() {
+        return gitUrl;
+    }
+
+    public void setGitUrl(String gitUrl) {
+        this.gitUrl = gitUrl;
     }
 
     public void addTask(Task t) {

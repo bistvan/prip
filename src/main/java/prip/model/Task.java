@@ -1,9 +1,11 @@
 package prip.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import prip.utils.Jsonable;
 
 import java.util.Date;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Task implements Jsonable {
     private int id;
     private boolean pinned;

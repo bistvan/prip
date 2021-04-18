@@ -5,6 +5,7 @@ import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.MimeTypes;
 import org.stringtemplate.v4.ST;
 import prip.model.Day;
+import prip.model.ReportChunk;
 import prip.utils.JsonResult;
 import prip.model.Task;
 import prip.model.Workspace;
@@ -128,6 +129,14 @@ public class WorkspaceActions implements ActionHolder {
         ws.save();
 
         return new JsonResult().toJson();
+    }
+
+
+    @HtAction(path = "/workspace/report", mime = MimeTypes.Type.APPLICATION_JSON_UTF_8, method = HttpMethod.POST)
+    public String getReport(HtContext ctx) throws IOException {
+        ReportChunk chunk = new ReportChunk();
+
+        return chunk.toJson();
     }
 
     private static Cookie getCookie(HtContext ctx) {
