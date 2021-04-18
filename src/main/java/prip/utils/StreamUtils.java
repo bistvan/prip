@@ -35,6 +35,18 @@ public class StreamUtils {
             InputStreamReader reader = encoding != null ? new InputStreamReader(input, encoding) : new InputStreamReader(input);
             Reader in = new BufferedReader(reader)
         ) {
+            return toString(in, encoding, size);
+        } catch (IOException e) {
+            throw new IORuntimeException(e);
+        }
+    }
+
+    public static StringBuilder toString(Reader in, String encoding) {
+        return toString(in, encoding, -1);
+    }
+
+    public static StringBuilder toString(Reader in, String encoding, int size) {
+        try {
             StringBuilder result = size > -1 ? new StringBuilder(size) : new StringBuilder();
             int ch;
             while ((ch = in.read()) > -1)
@@ -44,6 +56,7 @@ public class StreamUtils {
             throw new IORuntimeException(e);
         }
     }
+
 
     public static long copy(InputStream input, OutputStream output, StreamCopyObserver sco) throws IOException {
         byte[] buffer = new byte[1024];

@@ -1,11 +1,13 @@
 package prip.model;
 
-import java.util.ArrayList;
 import java.util.Date;
 
-public class Day {
+public class Day implements Comparable {
     private Date date;
-    private ArrayList<Activity> activities;
+    private String activities;
+
+    public Day() {
+    }
 
     public Date getDate() {
         return date;
@@ -15,11 +17,24 @@ public class Day {
         this.date = date;
     }
 
-    public ArrayList<Activity> getActivities() {
+    public String getActivities() {
         return activities;
     }
 
-    public void setActivities(ArrayList<Activity> activities) {
+    public void setActivities(String activities) {
         this.activities = activities;
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        if (o instanceof Day) {
+            Day d = (Day) o;
+            if (d.date != null) {
+                return date == null ? 1 : date.compareTo(d.date);
+            }
+            else if (date == null)
+                return 0;
+        }
+        return -1;
     }
 }

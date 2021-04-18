@@ -1,13 +1,15 @@
 package prip.model;
 
+import prip.utils.Jsonable;
+
 import java.util.Date;
 
-public class Task {
+public class Task implements Jsonable {
     private int id;
     private boolean pinned;
     private String name;
     private String descr;
-    private Integer estimate;
+    private String estimate;
     private Date lastActive;
 
     public Task() {
@@ -18,6 +20,14 @@ public class Task {
         this.id = id;
         this.pinned = pinned;
         this.name = name;
+    }
+
+    public void update(Task t) {
+        this.id = t.getId();
+        this.name = t.getName();
+        this.descr = t.getDescr();
+        this.estimate = t.getEstimate();
+        this.pinned = t.isPinned();
     }
 
     public int getId() {
@@ -52,11 +62,11 @@ public class Task {
         this.descr = descr;
     }
 
-    public Integer getEstimate() {
+    public String getEstimate() {
         return estimate;
     }
 
-    public void setEstimate(Integer estimate) {
+    public void setEstimate(String estimate) {
         this.estimate = estimate;
     }
 

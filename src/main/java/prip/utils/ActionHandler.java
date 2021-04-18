@@ -8,13 +8,9 @@ import org.eclipse.jetty.http.MimeTypes;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import prip.PripServer;
-import prip.utils.HtAction;
-import prip.utils.HtContext;
-import prip.utils.HttpAction;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -67,7 +63,8 @@ public class ActionHandler extends AbstractHandler {
     }
 
     private void register(HttpAction action, HtAction anno) {
-        register(action, anno.path(), anno.method());
+        for (String p : anno.path())
+            register(action, p, anno.method());
     }
 
     private synchronized void register(HttpAction action, String path, HttpMethod... methods) {
@@ -94,10 +91,17 @@ public class ActionHandler extends AbstractHandler {
                     Throwable t = e instanceof WrapperException ? ((WrapperException) e).unwrap() : e;
 
                     log.log(Level.SEVERE, "Process went wrong", t);
-                    response.getWriter()
-                        .append("ERROR: ").append(t.getClass().getName()).append(": ")
-                        .append(t.getMessage());
-                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    if (action.isJson()) {
+                        response.getWriter()
+                            .append(new JsonResult(t.getClass().getName() + ": " + t.getMessage()).toJson());
+                        response.setStatus(HttpServletResponse.SC_OK);
+                    }
+                    else {
+                        response.getWriter()
+                            .append("ERROR: ").append(t.getClass().getName()).append(": ")
+                            .append(t.getMessage());
+                        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    }
                     baseRequest.setHandled(true);
                 }
             }

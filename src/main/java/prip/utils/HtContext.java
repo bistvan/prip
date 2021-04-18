@@ -4,6 +4,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.server.Request;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class HtContext {
     public final String target;
     public final Request baseRequest;
@@ -43,5 +47,24 @@ public class HtContext {
         if (s != null && s.length() > max)
             throw new AppException("Input parameter '" + id + "' longer than " + max);
         return s;
+    }
+
+    public Date getDate(String id, SimpleDateFormat fmt) {
+        Date d = optDate(id, fmt);
+        if (d == null)
+            throw new AppException("No input parameter: '" + id + '\'');
+        return d;
+    }
+
+    public Date optDate(String id, SimpleDateFormat fmt) {
+        String s = optString(id, 30);
+        if (s != null) {
+            try {
+                return fmt.parse(s);
+            } catch (ParseException e) {
+                throw new AppException("Date parse error: " + s, e);
+            }
+        }
+        return null;
     }
 }

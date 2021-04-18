@@ -4,13 +4,14 @@ import jakarta.servlet.http.Cookie;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.MimeTypes;
 import org.stringtemplate.v4.ST;
+import prip.model.Day;
+import prip.utils.JsonResult;
+import prip.model.Task;
 import prip.model.Workspace;
-import prip.utils.ActionHolder;
-import prip.utils.HtAction;
-import prip.utils.HtContext;
-import prip.utils.Resource;
+import prip.utils.*;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Date;
 
 public class WorkspaceActions implements ActionHolder {
@@ -20,7 +21,7 @@ public class WorkspaceActions implements ActionHolder {
     public final Resource wsPage = new Resource("/static/workspace.html");
     public final Resource mainPage = new Resource("/static/main.html");
 
-    @HtAction(path = "/")
+    @HtAction(path = {"/", "/index.html"})
     public String main(HtContext ctx) {
         String noWs = ctx.request.getParameter("noWs");
         ST t = new ST(mainPage.asString(), '$', '$');
@@ -77,9 +78,56 @@ public class WorkspaceActions implements ActionHolder {
     @HtAction(path = "/workspace/data", mime = MimeTypes.Type.APPLICATION_JSON_UTF_8)
     public String workspaceData(HtContext ctx) {
         Workspace ws = getCurrentWorkspace(ctx, true);
+        Date date = ctx.optDate("date", DateUtils.instance().getDateFmt());
         Workspace res = new Workspace(ws);
-        res.addPinnedTasks(ws);
+        res.addWeekData(ws, date);
         return res.toJson();
+    }
+
+    @HtAction(path = "/workspace/task", mime = MimeTypes.Type.APPLICATION_JSON_UTF_8)
+    public String findTask(HtContext ctx) {
+        Workspace ws = getCurrentWorkspace(ctx, true);
+        String name = ctx.getString("name", 250);
+        for (Task t : ws.getTasks()) {
+            if (name.equals(t.getName()))
+                return t.toJson();
+        }
+        return null;
+    }
+
+    @HtAction(path = "/workspace/save", mime = MimeTypes.Type.APPLICATION_JSON_UTF_8, method = HttpMethod.POST)
+    public String saveWorkspace(HtContext ctx) throws IOException {
+        StringBuilder json = StreamUtils.toString(ctx.request.getReader(), "utf-8");
+        Workspace ws = getCurrentWorkspace(ctx, true);
+        Workspace nws = Workspace.read(json);
+        for (Task task: nws.getTasks()) {
+            Task wt;
+            if (task.getId() == 0 || (wt = ws.getTask(task.getId())) == null)
+                ws.addTask(task);
+            else {
+                wt.update(task);
+            }
+        }
+        for (Day day : nws.getDays()) {
+            Day found = null;
+            for (Day wd : ws.getDays()) {
+                if (DateUtils.instance().sameDay(day.getDate(), wd.getDate())) {
+                    found = wd;
+                    break;
+                }
+            }
+            if (found != null)
+                found.setActivities(day.getActivities());
+            else
+                ws.addDay(day);
+        }
+        if (!ws.getDays().isEmpty())
+            Collections.sort(ws.getDays());
+
+        ws.update(nws);
+        ws.save();
+
+        return new JsonResult().toJson();
     }
 
     private static Cookie getCookie(HtContext ctx) {

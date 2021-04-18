@@ -15,7 +15,7 @@ import static java.lang.annotation.ElementType.METHOD;
 public @interface HtAction {
     HttpMethod[] method() default HttpMethod.GET;
 
-    String path();
+    String[] path();
 
     MimeTypes.Type mime() default MimeTypes.Type.TEXT_HTML_UTF_8;
 }

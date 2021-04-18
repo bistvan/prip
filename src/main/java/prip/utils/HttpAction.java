@@ -7,7 +7,28 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 
 public abstract class HttpAction {
+    private final MimeTypes.Type mime;
 
+    HttpAction(MimeTypes.Type mime) {
+        this.mime = mime;
+    }
+
+    public MimeTypes.Type getMimeType() {
+        return mime;
+    }
+
+    public boolean isJson() {
+        switch (mime) {
+            case TEXT_JSON:
+            case TEXT_JSON_8859_1:
+            case TEXT_JSON_UTF_8:
+            case APPLICATION_JSON:
+            case APPLICATION_JSON_UTF_8:
+            case APPLICATION_JSON_8859_1:
+                return true;
+        }
+        return false;
+    }
 
     public abstract void process(HtContext ctx) throws IOException;
 
@@ -53,16 +74,15 @@ public abstract class HttpAction {
 
     public static class StringAction extends HttpAction {
         private final ContentProvider cp;
-        private final MimeTypes.Type mime;
 
         public StringAction(ContentProvider cp, MimeTypes.Type mime) {
+            super(mime);
             this.cp = cp;
-            this.mime = mime;
         }
 
         @Override
         public void process(HtContext ctx) throws IOException {
-            ctx.response.setContentType(mime.asString());
+            ctx.response.setContentType(getMimeType().asString());
             ctx.response.setStatus(HttpServletResponse.SC_OK);
             ctx.baseRequest.setHandled(true);
             ctx.response.getWriter().println(cp.asString(ctx));

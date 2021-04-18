@@ -2,18 +2,14 @@ package prip.model;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import prip.PripServer;
-import prip.utils.AppException;
-import prip.utils.FileUtils;
-import prip.utils.IORuntimeException;
-import prip.utils.WrapperException;
+import prip.utils.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Random;
+import java.util.*;
 
-public class Workspace {
+public class Workspace implements Jsonable {
+    public static final List EMPTY = Arrays.asList();
     private static final HashMap<String, Workspace> CACHE = new HashMap<>();
 
     private String id;
@@ -21,25 +17,32 @@ public class Workspace {
     private String firstName;
     private String lastName;
     private String supervisor;
+    private Date current;
+    private Date started;
+    private Date stopped;
     private ArrayList<Task> tasks;
     private ArrayList<Day> days;
 
     public Workspace() {
-
     }
 
     public Workspace(Workspace ws) {
-        this.id = ws.id;
-        this.firstName = ws.firstName;
-        this.lastName = ws.lastName;
-        this.supervisor = ws.supervisor;
+        this.update(ws);
     }
 
     public Workspace(String id) {
         this.id = id;
     }
 
-
+    public void update(Workspace ws) {
+        this.id = ws.id;
+        this.firstName = ws.firstName;
+        this.lastName = ws.lastName;
+        this.supervisor = ws.supervisor;
+        this.started = ws.started;
+        this.stopped = ws.stopped;
+        this.current = ws.current;
+    }
 
     public static Workspace getInstance(String id) {
         Workspace ws = optInstance(id);
@@ -47,6 +50,14 @@ public class Workspace {
             throw new AppException("No Workspace found: " + id);
         return ws;
     }
+
+    public static Workspace read(CharSequence js) throws IOException {
+        Workspace res = new ObjectMapper()
+            .setDateFormat(DateUtils.instance().getDateSimpleTimeFmt())
+            .reader(Workspace.class).readValue(js.toString());
+        return res;
+    }
+
     public synchronized static Workspace optInstance(String id) {
         if (id == null || (id = id.trim()).length() == 0)
             return null;
@@ -56,8 +67,7 @@ public class Workspace {
             if (f.exists()) {
                 String wsjson = FileUtils.readFile(f);
                 try {
-                    res = new ObjectMapper().reader(Workspace.class).readValue(wsjson);
-                    CACHE.put(id, res);
+                    CACHE.put(id, res = read(wsjson));
                 } catch (IOException e) {
                     throw new IORuntimeException(e);
                 }
@@ -82,15 +92,6 @@ public class Workspace {
 
         CACHE.put(res.id, res);
         return res;
-    }
-
-    public String toJson() {
-        try {
-            return new ObjectMapper()
-                    .writerWithDefaultPrettyPrinter().writeValueAsString(this);
-        } catch (IOException e) {
-            throw new IORuntimeException(e);
-        }
     }
 
     public void save() {
@@ -142,13 +143,38 @@ public class Workspace {
         this.supervisor = supervisor;
     }
 
+    public Date getCurrent() {
+        return current;
+    }
+
+    public void setCurrent(Date current) {
+        this.current = current;
+    }
+
+    public Date getStarted() {
+        return started;
+    }
+
+    public void setStarted(Date started) {
+        this.started = started;
+    }
+
+    public Date getStopped() {
+        return stopped;
+    }
+
+    public void setStopped(Date stopped) {
+        this.stopped = stopped;
+    }
+
     public void addTask(Task t) {
-        if (tasks == null)
-            tasks = new ArrayList<>();
+        Objects.requireNonNull(t);
+        if (t.getId() < 1)
+            t.setId(nextTaskId());
         tasks.add(0, t);
     }
 
-    public void addPinnedTasks(Workspace ws) {
+    public void addWeekData(Workspace ws, Date date) {
         if (this.tasks == null)
             this.tasks = new ArrayList<>();
         if (ws.tasks != null) {
@@ -158,21 +184,57 @@ public class Workspace {
                     this.tasks.add(t);
             }
         }
+        if (date != null) {
+            if (!DateUtils.instance().isToday(date))
+                this.setCurrent(date);
+        }
+        else
+            date = new Date();
+
+        long start = DateUtils.instance().getWeek(date).getTime();
+        long end = DateUtils.instance().getWeek(date).getTime() + (7 * DateUtils.MILLIS_PER_DAY);
+        if (this.days == null)
+            this.days = new ArrayList<>();
+        if (ws.days != null) {
+            for (int i = 0, n = ws.days.size(); i < n; i++) {
+                Day d = ws.days.get(i);
+                long t = d.getDate().getTime();
+                if (t >= start && t < end) {
+                    this.days.add(d);
+                }
+            }
+        }
     }
 
-    public ArrayList<Task> getTasks() {
-        return tasks;
+    public List<Task> getTasks() {
+        return tasks == null ? EMPTY : tasks;
     }
 
     public void setTasks(ArrayList<Task> tasks) {
         this.tasks = tasks;
     }
 
-    public ArrayList<Day> getDays() {
-        return days;
+    public Task getTask(int id) {
+        for (int i = getTasks().size(); --i >= 0;) {
+            Task t = tasks.get(i);
+            if (t.getId() == id)
+                return t;
+        }
+        return null;
+    }
+
+    public List<Day> getDays() {
+        return days == null ? EMPTY : days;
     }
 
     public void setDays(ArrayList<Day> days) {
         this.days = days;
     }
+
+    public void addDay(Day day) {
+        if (days == null)
+            days = new ArrayList<>();
+        days.add(Objects.requireNonNull(day));
+    }
+
 }

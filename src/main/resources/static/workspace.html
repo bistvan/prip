@@ -8,7 +8,7 @@
 </head>
 <body data-wsid="$workspace$">
     <main>
-        <nav class="navbar navbar-expand navbar-dark bg-dark" aria-label="Second navbar example">
+        <nav class="navbar navbar-expand navbar-dark bg-dark fixed-top" aria-label="Second navbar example">
             <div class="container-fluid">
                 <a class="navbar-brand" href="#">Nice PRip</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExample02" aria-controls="navbarsExample02" aria-expanded="false" aria-label="Toggle navigation">
@@ -19,6 +19,9 @@
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
                             <a class="nav-link active" aria-current="page" href="/">Home</a>
+                        </li>
+                        <li class="nav-item fn-start-stop">
+                            <a class="nav-link active" aria-current="page" href="#">Start</a>
                         </li>
                         <li class="nav-item fn-save-ws" style="display:none">
                             <a class="nav-link active" aria-current="page" href="#"><b>[ Save ]</b></a>
@@ -44,8 +47,12 @@
 
         <div class="container">
             <h2 class="pb-2 border-bottom">Current week</h2>
-            <div id="ctrl" class="">
+            <div class="">
                 <p>
+                    <button type="button" id="prev-week" class="btn btn-primary" title="Previous week"><<</button>
+                    <span id="current-date">current date</span>
+                    <button type="button" id="next-week" class="btn btn-primary" title="Next week">>></button>
+                    <button type="button" id="go-today" class="btn btn-primary" title="Show today">Today</button>
                     <button type="button" id="show-prip" class="btn btn-primary" title="Show the progress Report of the current week">Show Report</button>
                 </p>
             </div>
