@@ -30,6 +30,9 @@ span#current-date {
     margin: 2px 6px;
 }
 
+.weekly-report {
+    margin-bottom: 80px;
+}
 .prip-tab {
     margin-top: 15px;
     border-bottom: 1px solid #333366;
@@ -57,4 +60,10 @@ span#current-date {
     text-decoration: underline;
     font-weight: bold;
     font-size: 1.4em;
+}
+
+.error-message span {
+    padding: 2px 9px;
+    background-color: #efefef;
+    color: #990000;
 }

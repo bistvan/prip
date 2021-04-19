@@ -102,6 +102,9 @@ public class Workspace implements Jsonable {
         res.addTask(new Task(res.nextTaskId(), true, "Standup meeting"));
         res.addTask(new Task(res.nextTaskId(), true, "Status meeting"));
 
+        res.setJiraNumber("(\bAAA\b)-[0-9]{1,6}");
+        res.setGitHash("#[a-f0-9]{7,40}");
+
         res.save();
 
         CACHE.put(res.id, res);
@@ -217,6 +220,8 @@ public class Workspace implements Jsonable {
         Objects.requireNonNull(t);
         if (t.getId() < 1)
             t.setId(nextTaskId());
+        if (this.tasks == null)
+            this.tasks = new ArrayList<>();
         tasks.add(0, t);
     }
 

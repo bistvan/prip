@@ -1,6 +1,14 @@
 $(function() {
     var ws = {tasks: []};
     var chg = false;
+    var errTO = null;
+
+    var showError = function(msg) {
+        $('.error-message').css('display', '').find('span').text(msg);
+        if (def(errTO))
+            clearTimeout(errTO);
+        errTO = setTimeout(function() {$('.error-message').hide(400);errTO = null}, 5000);
+    }
 
     var def = function(o) {
         return typeof o != 'undefined' && o != null;
@@ -92,11 +100,11 @@ $(function() {
                 resetClock();
             }
             else {
-                alert('Cannot edit: ' + curDay());
+                showError('Cannot edit: ' + curDay());
             }
         }
         else
-            alert('Task has no ID; Save first');
+            showError('Task has no ID; Save first');
     }
 
     var newTask = function(d, pre) {
@@ -125,7 +133,10 @@ $(function() {
         var id = $('<span/>').text(def(d.id) ? '#' + d.id : '#NONE').appendTo(ctrl);
         var logTime = $('<a href=# title="Log with time" class="log-with-time"/>').text('LogT').appendTo($('<span>').appendTo(ctrl))
             .click(function() {
-                logWork(d.id, def(ws.started) ? Math.trunc(((def(ws.stopped) ? ws.stopped : now()).getTime() - ws.started) / 1000) : null, text);
+                if (!def(ws.started))
+                    showError('Timer is not started.');
+                else
+                    logWork(d.id, def(ws.started) ? Math.trunc(((def(ws.stopped) ? ws.stopped : now()).getTime() - ws.started) / 1000) : null, text);
             });
         var log = $('<a href=# title="Log without time" class="log"/>').text('Log').appendTo($('<span>').appendTo(ctrl))
             .click(function() {
@@ -133,7 +144,10 @@ $(function() {
             });
         var log = $('<a href=# title="Log without time" class="log"/>').text('#com').appendTo($('<span>').appendTo(ctrl))
             .click(function() {
-                logWork(d.id, null, text, '#');
+                if (text.val().length == 0)
+                    showError('Set an activity description.');
+                else
+                    logWork(d.id, null, text, '#');
             });
         var unpin = $('<a href=# title="Unpin this task" class="unpin"/>').text('Unpin').appendTo($('<span>').appendTo(ctrl))
             .click(function() {
@@ -199,6 +213,8 @@ $(function() {
             d.current = parseDate(d.current);
             d.started = parseDate(d.started);
             d.stopped = parseDate(d.stopped);
+            if (!def(d.days))
+                d.days = [];
             for (var i = d.days.length; --i >= 0;)
                 d.days[i].date = parseDate(d.days[i].date);
             ws = d;
@@ -244,7 +260,7 @@ $(function() {
         var data = JSON.stringify(copyData(ws));
         $.post("/workspace/save", data, function(d) {
             if (d.error)
-                alert(d.error);
+                showError(d.error);
             else if (d.ok)
                 changed(false);
         }, "json");
@@ -327,7 +343,7 @@ $(function() {
         $.getJSON(url, function(d) {
             if (d.error) { alert(d.error); return; }
             $('#hide-prip').css('display', '');
-            var r = $('#weekly-report').css('display', '').empty();
+            var r = $('#weekly-report').empty();
 
             if (def(ws.supervisor))
             $('<h2>').text('Hi ' + ws.supervisor + '!').appendTo(r);
@@ -342,6 +358,7 @@ $(function() {
                 $('<h3>').text('Schedule for next week: ' + d.chunks[1].interval + ':').appendTo(r);
                 showTable(d.chunks[1]).appendTo(r);
             }
+            r.show(400);
         });
     }
     var showTable = function(chunk) {
@@ -422,7 +439,7 @@ $(function() {
         $('#next-week').click(function() { loadWorkspace(addDay(curDay(), 7)); })
         $('#go-today').click(function() { loadWorkspace(now()); })
         $('#show-prip').click(function() { showProgressReport(curDay()); })
-        $('#hide-prip').click(function() { $(this).css('display', 'none'); $('#weekly-report').css('display', 'none'); })
+        $('#hide-prip').click(function() { $(this).css('display', 'none'); $('#weekly-report').hide(400); })
 
         // autoselect
         $("#weekly-report").on('mouseup', function() {

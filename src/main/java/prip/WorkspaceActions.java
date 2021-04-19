@@ -208,7 +208,7 @@ public class WorkspaceActions implements ActionHolder {
                                 if (x != null)
                                     rt.addCommit(x);
                                 else {
-                                    x = StringUtils.replacePattern(text, jiraPattern, ws.getJiraUrl());
+                                    x = jiraPattern == null ? null : StringUtils.replacePattern(text, jiraPattern, ws.getJiraUrl());
                                     rt.addActivity(x == null ? text : x);
                                 }
                             }
@@ -242,10 +242,6 @@ public class WorkspaceActions implements ActionHolder {
         if (first != null)
             chunk.setInterval(DateUtils.instance().getDateFmt().format(first) + " and " + DateUtils.instance().getDayOfMonthFmt().format(last));
 
-//        // add tasks
-//        for (ReportTask task : tasks.values())
-//            chunk.addTask(task);
-
         return chunk;
     }
 
@@ -273,13 +269,14 @@ public class WorkspaceActions implements ActionHolder {
     private static String deleteCookie(HtContext ctx) {
         String found = null;
         Cookie[] cookies = ctx.request.getCookies();
-        for (Cookie c : cookies) {
-            if (c.getName().equals(COOKIE_FAVORITE_WS)) {
-                c.setMaxAge(0);
-                ctx.response.addCookie(c);
-                found = c.getValue();
+        if (cookies != null)
+            for (Cookie c : cookies) {
+                if (c.getName().equals(COOKIE_FAVORITE_WS)) {
+                    c.setMaxAge(0);
+                    ctx.response.addCookie(c);
+                    found = c.getValue();
+                }
             }
-        }
         return found;
     }
 }
