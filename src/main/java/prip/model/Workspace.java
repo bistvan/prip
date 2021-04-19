@@ -32,6 +32,7 @@ public class Workspace implements Jsonable {
     private ArrayList<Day> days;
 
     public Workspace() {
+
     }
 
     public Workspace(Workspace ws) {
@@ -232,27 +233,28 @@ public class Workspace implements Jsonable {
         if (date != null) {
             if (!DateUtils.instance().isToday(date))
                 this.setCurrent(date);
+            else
+                this.setCurrent(null);
         }
-        else
+        else {
             date = new Date();
-
-        long start = DateUtils.instance().getWeek(date).getTime();
-        long end = DateUtils.instance().getWeek(date).getTime() + (7 * DateUtils.MILLIS_PER_DAY);
-        if (this.days == null)
-            this.days = new ArrayList<>();
-        if (ws.days != null) {
-            for (int i = 0, n = ws.days.size(); i < n; i++) {
-                Day d = ws.days.get(i);
-                long t = d.getDate().getTime();
-                if (t >= start && t < end) {
-                    this.days.add(d);
-                }
-            }
         }
+        if (this.started != null && !DateUtils.instance().isToday(this.started)) {
+            this.setStarted(null);
+            this.setStopped(null);
+        }
+
+        this.days = ws.getWeekDays(date);
     }
 
     public List<Task> getTasks() {
         return tasks == null ? EMPTY : tasks;
+    }
+    public HashMap<Integer, Task> getTaskLookup() {
+        HashMap<Integer, Task> result = new HashMap<>();
+        for (Task t : getTasks())
+            result.put(t.getId(), t);
+        return result;
     }
 
     public void setTasks(ArrayList<Task> tasks) {
@@ -270,6 +272,21 @@ public class Workspace implements Jsonable {
 
     public List<Day> getDays() {
         return days == null ? EMPTY : days;
+    }
+
+    public ArrayList<Day> getWeekDays(Date date) {
+        long start = DateUtils.instance().getWeek(date).getTime();
+        long end = DateUtils.instance().getWeek(date).getTime() + (7 * DateUtils.MILLIS_PER_DAY);
+        ArrayList<Day> result = new ArrayList<>();
+        if (this.days != null) {
+            for (int i = 0, n = this.days.size(); i < n; i++) {
+                Day d = this.days.get(i);
+                long t = d.getDate().getTime();
+                if (t >= start && t < end)
+                    result.add(d);
+            }
+        }
+        return result;
     }
 
     public void setDays(ArrayList<Day> days) {

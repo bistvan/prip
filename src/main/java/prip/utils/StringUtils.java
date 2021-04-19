@@ -1,5 +1,6 @@
 package prip.utils;
 
+import java.text.MessageFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -158,5 +159,27 @@ public class StringUtils {
         escaped = escaped.replace("\r", "\\r");
         escaped = escaped.replace("\t", "\\t");
         return escaped;
+    }
+
+    public static String replacePattern(String s, Pattern p, String format) {
+        Matcher m = p.matcher(s);
+        int index = 0;
+        StringBuilder b = null;
+        while (m.find()) {
+            if (b == null)
+                b = new StringBuilder();
+            if (m.start() > index)
+                b.append(s, index, m.start());
+            index = m.end();
+
+            String g = m.group(0);
+            b.append(String.format(format, g, g.length() < 11 ? g : g.substring(0, 11)));
+        }
+        if (b != null) {
+            if (index >= 0 && index < s.length())
+                b.append(s, index, s.length());
+            return b.toString();
+        }
+        return null;
     }
 }

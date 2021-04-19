@@ -4,16 +4,14 @@ import jakarta.servlet.http.Cookie;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.MimeTypes;
 import org.stringtemplate.v4.ST;
-import prip.model.Day;
-import prip.model.ReportChunk;
+import prip.model.*;
 import prip.utils.JsonResult;
-import prip.model.Task;
-import prip.model.Workspace;
 import prip.utils.*;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Date;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class WorkspaceActions implements ActionHolder {
     public static final String COOKIE_FAVORITE_WS = "favorite-ws";
@@ -101,6 +99,28 @@ public class WorkspaceActions implements ActionHolder {
         StringBuilder json = StreamUtils.toString(ctx.request.getReader(), "utf-8");
         Workspace ws = getCurrentWorkspace(ctx, true);
         Workspace nws = Workspace.read(json);
+        try {
+            if (!StringUtils.isEmpty(nws.getJiraNumber())) {
+                Pattern.compile(nws.getJiraNumber());
+                if (StringUtils.isEmpty(nws.getJiraUrl()))
+                    throw new AppException("JIRA Pattern provided but URL is empty");
+            }
+        }
+        catch (PatternSyntaxException ex) {
+            throw new AppException("Couldn't compile JIRA Number pattern: " + ex.getMessage());
+        }
+
+        try {
+            if (!StringUtils.isEmpty(nws.getGitHash())) {
+                Pattern.compile(nws.getGitHash());
+                if (StringUtils.isEmpty(nws.getGitUrl()))
+                    throw new AppException("JIRA Pattern provided but URL is empty");
+            }
+        }
+        catch (PatternSyntaxException ex) {
+            throw new AppException("Couldn't compile Commit pattern: " + ex.getMessage());
+        }
+
         for (Task task: nws.getTasks()) {
             Task wt;
             if (task.getId() == 0 || (wt = ws.getTask(task.getId())) == null)
@@ -132,11 +152,100 @@ public class WorkspaceActions implements ActionHolder {
     }
 
 
-    @HtAction(path = "/workspace/report", mime = MimeTypes.Type.APPLICATION_JSON_UTF_8, method = HttpMethod.POST)
+    @HtAction(path = "/workspace/report", mime = MimeTypes.Type.APPLICATION_JSON_UTF_8, method = HttpMethod.GET)
     public String getReport(HtContext ctx) throws IOException {
-        ReportChunk chunk = new ReportChunk();
+        Workspace ws = getCurrentWorkspace(ctx, true);
+        Date date = ctx.optDate("date", DateUtils.instance().getDateFmt());
+        ProgressReport prip = new ProgressReport();
+        prip.getChunks().add(getReportChunk(date, ws));
+        ReportChunk next = getReportChunk(DateUtils.instance().addWeek(date, 1), ws);
+        if (next.getTotalActivities() > 0)
+            prip.getChunks().add(next);
 
-        return chunk.toJson();
+        return prip.toJson();
+    }
+
+    private ReportChunk getReportChunk(Date date, Workspace ws) {
+        Pattern jiraPattern = StringUtils.isEmpty(ws.getJiraNumber()) ? null : Pattern.compile(ws.getJiraNumber());
+        Pattern commitPattern = StringUtils.isEmpty(ws.getGitHash()) ? null : Pattern.compile(ws.getGitHash());
+        ReportChunk chunk = new ReportChunk();
+        HashMap<Integer, Task> taskLookup = ws.getTaskLookup();
+        LinkedHashMap<Integer, ReportTask> tasks = new LinkedHashMap<>();
+        ReportDay[] days = new ReportDay[7];
+        for (Day d : ws.getWeekDays(date)) {
+            ReportDay rd = new ReportDay(d.getDate());
+            days[DateUtils.instance().getDayOfWeek(d.getDate()) - 1] = rd;
+
+            String s = d.getActivities();
+            IdentityHashMap<Task, Integer> dayTask = new IdentityHashMap<>();
+            if (!StringUtils.isEmpty(s)) {
+                try {
+                    for (String aRow : s.split("\n")) {
+                        String[] act = aRow.split(",", 3);
+                        Task t = taskLookup.get(Integer.parseInt(act[0]));
+                        if (t == null)
+                            throw new Exception("Unknown task ID: '" + act[0] + '\'');
+
+                        ReportTask rt = tasks.computeIfAbsent(t.getId(), integer -> {
+                            ReportTask r = new ReportTask(t.title(), t.getEstimate());
+                            chunk.addTask(r);
+                            return r;
+                        });
+
+                        chunk.addActivity();
+                        if (act.length > 1) {
+                            if (!StringUtils.isEmpty(act[1])) {
+                                int spent = Integer.parseInt(act[1]);
+                                rt.addSpentTime(spent);
+                                chunk.addSpentTime(spent);
+                            }
+                            String text;
+                            if (act.length > 2 && !StringUtils.isEmpty(text = act[2])) {
+                                String x = null;
+                                if (commitPattern != null)
+                                    x = StringUtils.replacePattern(text, commitPattern, ws.getGitUrl());
+                                if (x != null)
+                                    rt.addCommit(x);
+                                else {
+                                    x = StringUtils.replacePattern(text, jiraPattern, ws.getJiraUrl());
+                                    rt.addActivity(x == null ? text : x);
+                                }
+                            }
+                        }
+                        if (dayTask.putIfAbsent(t, 1) == null)
+                            rd.addActivity(t.getName());
+                    }
+
+                }
+                catch (Exception e) {
+                    rd.addActivity(e.getClass().getName() + ": " + e.getMessage());
+                }
+            }
+        }
+
+        // add days
+        Date start = DateUtils.instance().getWeek(date);
+        Date first = null, last = null;
+        for (int i = 0; i < days.length; i++) {
+            ReportDay d = days[i];
+            if (d == null)
+                d = new ReportDay(DateUtils.instance().addDay(start, i));
+            else {
+                if (first == null)
+                    first = d.getDate();
+                last = d.getDate();
+            }
+
+            chunk.addDay(d);
+        }
+        if (first != null)
+            chunk.setInterval(DateUtils.instance().getDateFmt().format(first) + " and " + DateUtils.instance().getDayOfMonthFmt().format(last));
+
+//        // add tasks
+//        for (ReportTask task : tasks.values())
+//            chunk.addTask(task);
+
+        return chunk;
     }
 
     private static Cookie getCookie(HtContext ctx) {

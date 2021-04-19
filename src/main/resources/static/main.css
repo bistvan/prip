@@ -29,3 +29,32 @@ span#current-date {
     font-weight: bold;
     margin: 2px 6px;
 }
+
+.prip-tab {
+    margin-top: 15px;
+    border-bottom: 1px solid #333366;
+    border-left: 1px solid #333366;
+    font-family: inherit;
+    color: inherit;
+}
+.prip-tab .prip-head {
+    background-color: #333399;
+    font-size:1.4em;
+    font-weight: bold;
+}
+.prip-tab td {
+    border-top: 1px solid #333366;
+    border-right: 1px solid #333366;
+    padding: 3px 7px;
+    font-family: inherit;
+    color: inherit;
+}
+
+.prip-details {
+}
+
+.prip-details .task-title {
+    text-decoration: underline;
+    font-weight: bold;
+    font-size: 1.4em;
+}

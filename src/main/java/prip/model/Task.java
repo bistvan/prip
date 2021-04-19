@@ -2,6 +2,7 @@ package prip.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import prip.utils.Jsonable;
+import prip.utils.StringUtils;
 
 import java.util.Date;
 
@@ -30,6 +31,14 @@ public class Task implements Jsonable {
         this.descr = t.getDescr();
         this.estimate = t.getEstimate();
         this.pinned = t.isPinned();
+    }
+
+    public String title() {
+        StringBuilder r = new StringBuilder();
+        r.append(name);
+        if (!StringUtils.isEmpty(descr))
+            r.append(' ').append(descr);
+        return r.toString();
     }
 
     public int getId() {

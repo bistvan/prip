@@ -12,6 +12,7 @@ public class DateUtils {
     private static DateUtils INSTANCE = new DateUtils();
 
     private SimpleDateFormat dateSimpleTime;
+    private SimpleDateFormat day;
     private SimpleDateFormat date;
     private Calendar cal;
 
@@ -33,6 +34,14 @@ public class DateUtils {
         return f;
     }
 
+    public SimpleDateFormat getDayOfMonthFmt() {
+        SimpleDateFormat f = day;
+        if (f == null)
+            day = f = new DF("MM-dd");
+        return f;
+    }
+
+
     static final class DF extends SimpleDateFormat {
         public DF(String pattern) {
             super(pattern);
@@ -45,10 +54,11 @@ public class DateUtils {
         }
     }
 
-    public Calendar calendar() {
+    public Calendar calendar(Date d) {
         Calendar c = cal;
         if (c == null)
             cal = c = Calendar.getInstance();
+        c.setTime(d);
         return c;
     }
 
@@ -84,7 +94,7 @@ public class DateUtils {
     }
 
     public Calendar clearTime(Date d) {
-        Calendar c = calendar();
+        Calendar c = calendar(d);
         c.setTime(d);
         c.set(Calendar.HOUR_OF_DAY, 0);
         c.set(Calendar.MINUTE, 0);
@@ -98,6 +108,23 @@ public class DateUtils {
         int day = c.get(Calendar.DAY_OF_WEEK);
         if (day > 0)
             c.add(Calendar.DAY_OF_WEEK, -day + 1);
+        return c.getTime();
+    }
+
+    public int getDayOfWeek(Date d) {
+        Calendar c = calendar(d);
+        return c.get(Calendar.DAY_OF_WEEK);
+    }
+
+    public Date addWeek(Date d, int count) {
+        Calendar c = calendar(d);
+        c.add(Calendar.WEEK_OF_YEAR, count);
+        return c.getTime();
+    }
+
+    public Date addDay(Date d, int count) {
+        Calendar c = calendar(d);
+        c.add(Calendar.DAY_OF_YEAR, count);
         return c.getTime();
     }
 

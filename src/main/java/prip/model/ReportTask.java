@@ -1,10 +1,23 @@
 package prip.model;
 
+import prip.utils.StringUtils;
+
+import java.util.ArrayList;
+
 public class ReportTask {
     private String title;
     private String estimate;
-    private String activities;
-    private String spentTime;
+    private ArrayList<String> activities;
+    private String commits;
+    private Integer spentTime;
+
+    public ReportTask() {
+    }
+
+    public ReportTask(String title, String estimate) {
+        this.title = title;
+        this.estimate = estimate;
+    }
 
     public String getTitle() {
         return title;
@@ -22,19 +35,46 @@ public class ReportTask {
         this.estimate = estimate;
     }
 
-    public String getActivities() {
+    public ArrayList<String> getActivities() {
         return activities;
     }
 
-    public void setActivities(String activities) {
+    public void setActivities(ArrayList<String> activities) {
         this.activities = activities;
     }
 
-    public String getSpentTime() {
+    public void addActivity(String act) {
+        act = act.trim();
+        if (activities == null)
+            activities = new ArrayList<>();
+        if (!activities.contains(act))
+            activities.add(act);
+    }
+
+    public String getCommits() {
+        return commits;
+    }
+
+    public void setCommits(String commits) {
+        this.commits = commits;
+    }
+
+    public void addCommit(String commit) {
+        this.commits = StringUtils.isEmpty(this.commits) ? commit : this.commits + ", " + commit;
+    }
+
+    public Integer getSpentTime() {
         return spentTime;
     }
 
-    public void setSpentTime(String spentTime) {
+    public void setSpentTime(Integer spentTime) {
         this.spentTime = spentTime;
+    }
+
+    public void addSpentTime(int secs) {
+        if (spentTime == null)
+            spentTime = secs;
+        else
+            spentTime += secs;
     }
 }

@@ -34,6 +34,13 @@ $(function() {
     var curWeek = function() {
         return addDay(curDay(), -curDay().getDay());
     }
+    var spentTime = function(t) {
+        if (t < 60)
+            return '1 min.';
+        if (t < 3600)
+            return Math.round(t / 60) + 'mins.';
+        return (Math.round(t / 360) / 10) + 'hours';
+    }
     var wsDay = function(d) { // workspace day
         if (!def(d)) d = new Date();
         for (var i = ws.days.length; --i >= 0;) {
@@ -204,6 +211,7 @@ $(function() {
                 }
             });
             showTasks(ws);
+            changed(false);
         });
     }
 
@@ -297,15 +305,89 @@ $(function() {
         $('.fn-start-stop a').text(t).toggleClass('clock-running', s);
     }
 
+    var showProgressReport = function(date) {
+        var url = "/workspace/report?date=" + (typeof date == 'string' ? date : dateStr(date));
+        $.getJSON(url, function(d) {
+            if (d.error) { alert(d.error); return; }
+            $('#hide-prip').css('display', '');
+            var r = $('#weekly-report').css('display', '').empty();
+
+            if (def(ws.supervisor))
+            $('<h2>').text('Hi ' + ws.supervisor + '!').appendTo(r);
+            if (d.chunks.length > 0) {
+                $('<p>').text('This is my progress report from: ' + d.chunks[0].interval + '.').appendTo(r);
+                $('<p>').text('Thanks, ' + ws.devName).appendTo(r);
+
+                showTable(d.chunks[0]).appendTo(r);
+                showDetails(d.chunks[0]).appendTo(r);
+            }
+            if (d.chunks.length > 1) {
+                $('<h3>').text('Schedule for next week: ' + d.chunks[1].interval + ':').appendTo(r);
+                showTable(d.chunks[1]).appendTo(r);
+            }
+        });
+    }
+    var showTable = function(chunk) {
+        var t = $('<table class="prip-tab" cellspacing="0" cellpadding="0"/>');
+        var start = def(chunk.days[0].activities) && chunk.days[0].activities.length > 0 ? 0 : 1;
+        var end = chunk.days.length;
+        if (!def(chunk.days[end - 1].activities) || chunk.days[end - 1].activities.length == 0) end--;
+
+        var head = $('<tr style="color: #ffffff;" class="prip-head"/>').appendTo(t);
+        var rows = [];
+        var maxRows = 0;
+        for (var i = start; i < end; i++) {
+            var day = chunk.days[i];
+            if (def(day.activities) && maxRows < day.activities.length)
+                maxRows = day.activities.length;
+        }
+        for (var i = start; i < end; i++) {
+            var day = chunk.days[i];
+            $('<td/>').text(day.name).appendTo(head);
+            var l = def(day.activities) ? day.activities.length : 0;
+            if (l) {
+                for (var j = 0; j < l; j++) {
+                    var ar;
+                    if (rows.length <= j) rows.push(ar = $('<tr/>').appendTo(t)); else ar = rows[j];
+                    var td = $('<td/>').text(day.activities[j]).appendTo(ar);
+                    if (j == l - 1 && l < maxRows)
+                        td.attr('rowspan', maxRows - l + 1);
+                }
+            }
+
+        }
+        return t;
+    }
+
+    var showDetails = function(chunk) {
+        var r = $('<div class="prip-details"/>');
+        for (var i = 0; i < chunk.tasks.length; i++) {
+            var task = chunk.tasks[i];
+            var tb = $('<p class="task-block">').appendTo(r);
+            $('<span class="task-title">').text(task.title).appendTo(tb); tb.append('<br/>');
+            if (def(task.activities)) {
+                for (var j = 0; j < task.activities.length; j++) {
+                    $('<span class="task-activity">').text(task.activities[j]).appendTo(tb); tb.append('<br/>');
+                }
+            }
+            if (def(task.spentTime)) {
+                $('<span class="task-commit">').text('Spent time: ' + spentTime(task.spentTime)).appendTo(tb); tb.append('<br/>');
+            }
+            if (def(task.commits)) {
+                $('<span class="task-commit">').text('Commits: ').append(task.commits).appendTo(tb); tb.append('<br/>');
+            }
+
+        }
+        return r;
+    }
+
     var guiInit = function() {
         $('#heaven').click(function() {window.location = '/workspace';});
         $('#ctrl #new-task').click(function() { newTask({pinned: true}, true)});
+
+        // main menu
         $('.fn-save-ws a').click(function() { saveWorkspace(); })
         $('.fn-start-stop a').click(function() { startStop(true); })
-        // date navigation
-        $('#prev-week').click(function() { loadWorkspace(addDay(curDay(), -7)); })
-        $('#next-week').click(function() { loadWorkspace(addDay(curDay(), 7)); })
-        $('#go-today').click(function() { loadWorkspace(now()); })
         $('.fn-settings a').click(function() {
             if ($("#settings-panel").css('display') == 'none') {
                 $("#settings-panel").show( 400 );
@@ -315,6 +397,37 @@ $(function() {
                 $("#settings-panel").hide( 400 );
                 $(this).text('Settings');
             }
+        });
+
+        // date navigation
+        $('#prev-week').click(function() { loadWorkspace(addDay(curDay(), -7)); })
+        $('#next-week').click(function() { loadWorkspace(addDay(curDay(), 7)); })
+        $('#go-today').click(function() { loadWorkspace(now()); })
+        $('#show-prip').click(function() { showProgressReport(curDay()); })
+        $('#hide-prip').click(function() { $(this).css('display', 'none'); $('#weekly-report').css('display', 'none'); })
+
+        // autoselect
+        $("#weekly-report").on('mouseup', function() {
+        	var sel, range;
+        	var el = $(this)[0];
+        	if (window.getSelection && document.createRange) { //Browser compatibility
+        	  sel = window.getSelection();
+        	  if(sel.toString() == ''){ //no text selection
+        		 window.setTimeout(function(){
+        			range = document.createRange(); //range object
+        			range.selectNodeContents(el); //sets Range
+        			sel.removeAllRanges(); //remove all ranges from selection
+        			sel.addRange(range);//add Range to a Selection.
+        		},1);
+        	  }
+        	}else if (document.selection) { //older ie
+        		sel = document.selection.createRange();
+        		if(sel.text == ''){ //no text selection
+        			range = document.body.createTextRange();//Creates TextRange object
+        			range.moveToElementText(el);//sets Range
+        			range.select(); //make selection.
+        		}
+        	}
         });
     }
 

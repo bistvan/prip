@@ -51,19 +51,19 @@
                         Autosave (after 1 min)
                     </label>
                 </div>
-                <div class="mb-3 col-sm-8">
+                <div class="mb-3 col-sm-4">
                     <label for="setjiraNumber">Jira number pattern</label>
                     <input type="text" class="form-control" id="setjiraNumber">
                 </div>
-                <div class="mb-3 col-sm-4">
+                <div class="mb-3 col-sm-8">
                     <label for="setjiraUrl">Jira URL</label>
                     <input type="text" class="form-control" id="setjiraUrl">
                 </div>
-                <div class="mb-3 col-sm-8">
+                <div class="mb-3 col-sm-4">
                     <label for="setgitHash">Git hash pattern</label>
                     <input type="text" class="form-control" id="setgitHash">
                 </div>
-                <div class="mb-3 col-sm-4">
+                <div class="mb-3 col-sm-8">
                     <label for="setgitUrl">Git commit URL</label>
                     <input type="text" class="form-control" id="setgitUrl">
                 </div>
@@ -90,8 +90,11 @@
                     <button type="button" id="next-week" class="btn btn-primary" title="Next week">>></button>
                     <button type="button" id="go-today" class="btn btn-primary" title="Show today">Today</button>
                     <button type="button" id="show-prip" class="btn btn-primary" title="Show the progress Report of the current week">Show Report</button>
+                    <button type="button" id="hide-prip" class="btn btn-primary" title="Hide the generated progress report" style="display:none">Hide Report</button>
                 </p>
             </div>
+            <a name="report-place"/>
+            <div class="row g-3" id="weekly-report" style="display:none">report</div>
             <div class="row g-3" id="report-sum"></div>
         </div>
         <div id="current_week" class="container">
