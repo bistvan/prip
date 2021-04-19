@@ -187,7 +187,8 @@ public class WorkspaceActions implements ActionHolder {
                             throw new Exception("Unknown task ID: '" + act[0] + '\'');
 
                         ReportTask rt = tasks.computeIfAbsent(t.getId(), integer -> {
-                            ReportTask r = new ReportTask(t.title(), t.getEstimate());
+                            String title = jiraPattern != null ? title = StringUtils.replacePattern(t.title(), jiraPattern, ws.getJiraUrl()) : null;
+                            ReportTask r = new ReportTask(title == null ? t.title() : title, t.getEstimate());
                             chunk.addTask(r);
                             return r;
                         });

@@ -78,11 +78,14 @@ $(function() {
         return new Date(t).toISOString().slice(0, def(x) ? x : 10);
     }
 
-    var logWork = function(tid,sec,descr) {
+    var logWork = function(tid,sec,descr,pref) {
         if (def(tid)) {
             var day = wsDay(curDay());
             if (def(day)) {
-                var act = tid + ',' + (def(sec) ? sec : '') + ',' + descr.val();
+                var tx = descr.val();
+                if (def(pref) && tx.length > 0 && !tx.startsWith(pref))
+                    tx = pref + tx;
+                var act = tid + ',' + (def(sec) ? sec : '') + ',' + tx;
                 descr.val('');
                 set('activities', def(day.activities) && day.activities.length > 0 ? day.activities + '\n' + act : act, day);
                 $('.rep-sum-d' + day.day + ' textarea').val(day.activities);
@@ -127,6 +130,10 @@ $(function() {
         var log = $('<a href=# title="Log without time" class="log"/>').text('Log').appendTo($('<span>').appendTo(ctrl))
             .click(function() {
                 logWork(d.id, null, text);
+            });
+        var log = $('<a href=# title="Log without time" class="log"/>').text('#com').appendTo($('<span>').appendTo(ctrl))
+            .click(function() {
+                logWork(d.id, null, text, '#');
             });
         var unpin = $('<a href=# title="Unpin this task" class="unpin"/>').text('Unpin').appendTo($('<span>').appendTo(ctrl))
             .click(function() {
@@ -278,11 +285,18 @@ $(function() {
         tick();
     }
 
-    var resetClock = function() {
+    var resetClock = function(clean) {
+        if (def(clean)) {
+            set('started', null);
+            set('stopped', null);
+            tick();
+        }
+        else {
         if (def(ws.started))
             ws.started = now();
-        if (def(ws.stopped))
-            ws.stopped = now();
+            if (def(ws.stopped))
+                ws.stopped = now();
+        }
     }
 
     var tick = function() {
@@ -298,9 +312,12 @@ $(function() {
                 s = true;
             }
             t = '[ ' + timeStr(Math.trunc((t - ws.started.getTime()) / 1000)) + ' ]';
+            $('.fn-reset').css('display', '');
         }
-        else
+        else {
             t = 'Start';
+            $('.fn-reset').css('display', 'none');
+        }
 
         $('.fn-start-stop a').text(t).toggleClass('clock-running', s);
     }
@@ -328,7 +345,7 @@ $(function() {
         });
     }
     var showTable = function(chunk) {
-        var t = $('<table class="prip-tab" cellspacing="0" cellpadding="0"/>');
+        var t = $('<table class="prip-tab" cellspacing="0" cellpadding="4"/>');
         var start = def(chunk.days[0].activities) && chunk.days[0].activities.length > 0 ? 0 : 1;
         var end = chunk.days.length;
         if (!def(chunk.days[end - 1].activities) || chunk.days[end - 1].activities.length == 0) end--;
@@ -364,17 +381,17 @@ $(function() {
         for (var i = 0; i < chunk.tasks.length; i++) {
             var task = chunk.tasks[i];
             var tb = $('<p class="task-block">').appendTo(r);
-            $('<span class="task-title">').text(task.title).appendTo(tb); tb.append('<br/>');
+            $('<span class="task-title">').append($.parseHTML(task.title)).appendTo(tb); tb.append('<br/>');
             if (def(task.activities)) {
                 for (var j = 0; j < task.activities.length; j++) {
-                    $('<span class="task-activity">').text(task.activities[j]).appendTo(tb); tb.append('<br/>');
+                    $('<span class="task-activity">').append($.parseHTML(task.activities[j])).appendTo(tb); tb.append('<br/>');
                 }
             }
             if (def(task.spentTime)) {
-                $('<span class="task-commit">').text('Spent time: ' + spentTime(task.spentTime)).appendTo(tb); tb.append('<br/>');
+                $('<span class="task-spent">').text('Spent time: ' + spentTime(task.spentTime)).appendTo(tb); tb.append('<br/>');
             }
             if (def(task.commits)) {
-                $('<span class="task-commit">').text('Commits: ').append(task.commits).appendTo(tb); tb.append('<br/>');
+                $('<span class="task-commit">').text('Commits: ').append($.parseHTML(task.commits)).appendTo(tb); tb.append('<br/>');
             }
 
         }
@@ -386,8 +403,9 @@ $(function() {
         $('#ctrl #new-task').click(function() { newTask({pinned: true}, true)});
 
         // main menu
-        $('.fn-save-ws a').click(function() { saveWorkspace(); })
-        $('.fn-start-stop a').click(function() { startStop(true); })
+        $('.fn-save-ws a').click(function() { saveWorkspace(); });
+        $('.fn-start-stop a').click(function() { startStop(true); });
+        $('.fn-reset a').click(function() { resetClock(true); });
         $('.fn-settings a').click(function() {
             if ($("#settings-panel").css('display') == 'none') {
                 $("#settings-panel").show( 400 );

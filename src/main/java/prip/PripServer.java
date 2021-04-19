@@ -25,6 +25,7 @@ public class PripServer extends JettyServer {
                 new StaticContent(),
                 new WorkspaceActions()
             ).start();
+            log.info("Server Started --oOOo-(O|O)-oOOo--");
         }
         catch (Exception e) {
             log.log(Level.SEVERE, "Fail", e);
