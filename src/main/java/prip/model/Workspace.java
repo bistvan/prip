@@ -112,6 +112,33 @@ public class Workspace implements Jsonable {
     }
 
     public void save() {
+        HashMap<Integer, Task> t = taskLookup();
+        long limit = System.currentTimeMillis() - DateUtils.MILLIS_PER_DAY * 6 * 30;
+        for (Iterator<Day> it = getDays().iterator(); it.hasNext();) {
+            Day d = it.next();
+            if (d.getDate().getTime() < limit) {
+                it.remove();
+            }
+            else {
+                for (String a : d.getActivities().split("\n")) {
+                    if (StringUtils.isEmpty(a)) continue;
+                    String [] b = a.split(",");
+                    if (StringUtils.isEmpty(b[0])) continue;
+                    try {
+                        t.remove(Integer.parseInt(b[0]));
+                    }
+                    catch (Exception ex) {
+                        // don't care
+                    }
+                }
+            }
+        }
+        for (Iterator<Task> it = getTasks().iterator(); it.hasNext();) {
+            Task task = it.next();
+            if (!task.isPinned() && t.containsKey(task.getId()))
+                it.remove();
+        }
+
         File f = new File(PripServer.WORK_FOLDER, id);
         FileUtils.toFile(toJson(), f);
     }
@@ -242,7 +269,9 @@ public class Workspace implements Jsonable {
                 this.setCurrent(null);
         }
         else {
-            date = new Date();
+            date = ws.current;
+            if (date == null)
+                date = new Date();
         }
         if (this.started != null && !DateUtils.instance().isToday(this.started)) {
             this.setStarted(null);
@@ -255,7 +284,8 @@ public class Workspace implements Jsonable {
     public List<Task> getTasks() {
         return tasks == null ? EMPTY : tasks;
     }
-    public HashMap<Integer, Task> getTaskLookup() {
+
+    public HashMap<Integer, Task> taskLookup() {
         HashMap<Integer, Task> result = new HashMap<>();
         for (Task t : getTasks())
             result.put(t.getId(), t);

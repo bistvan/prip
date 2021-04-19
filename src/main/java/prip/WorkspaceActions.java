@@ -169,7 +169,7 @@ public class WorkspaceActions implements ActionHolder {
         Pattern jiraPattern = StringUtils.isEmpty(ws.getJiraNumber()) ? null : Pattern.compile(ws.getJiraNumber());
         Pattern commitPattern = StringUtils.isEmpty(ws.getGitHash()) ? null : Pattern.compile(ws.getGitHash());
         ReportChunk chunk = new ReportChunk();
-        HashMap<Integer, Task> taskLookup = ws.getTaskLookup();
+        HashMap<Integer, Task> taskLookup = ws.taskLookup();
         LinkedHashMap<Integer, ReportTask> tasks = new LinkedHashMap<>();
         ReportDay[] days = new ReportDay[7];
         for (Day d : ws.getWeekDays(date)) {
@@ -181,14 +181,17 @@ public class WorkspaceActions implements ActionHolder {
             if (!StringUtils.isEmpty(s)) {
                 try {
                     for (String aRow : s.split("\n")) {
+                        aRow = aRow.trim();
+                        if (StringUtils.isEmpty(aRow))
+                            continue;
                         String[] act = aRow.split(",", 3);
                         Task t = taskLookup.get(Integer.parseInt(act[0]));
                         if (t == null)
                             throw new Exception("Unknown task ID: '" + act[0] + '\'');
 
                         ReportTask rt = tasks.computeIfAbsent(t.getId(), integer -> {
-                            String title = jiraPattern != null ? title = StringUtils.replacePattern(t.title(), jiraPattern, ws.getJiraUrl()) : null;
-                            ReportTask r = new ReportTask(title == null ? t.title() : title, t.getEstimate());
+                            String title = StringUtils.replacePattern(t.title(), jiraPattern, ws.getJiraUrl());
+                            ReportTask r = new ReportTask(title, t.getEstimate());
                             chunk.addTask(r);
                             return r;
                         });
@@ -202,19 +205,17 @@ public class WorkspaceActions implements ActionHolder {
                             }
                             String text;
                             if (act.length > 2 && !StringUtils.isEmpty(text = act[2])) {
-                                String x = null;
-                                if (commitPattern != null)
-                                    x = StringUtils.replacePattern(text, commitPattern, ws.getGitUrl());
-                                if (x != null)
+                                String x = StringUtils.replacePattern(text, commitPattern, ws.getGitUrl());
+                                if (x != text) // replace returned the same instance if no match
                                     rt.addCommit(x);
                                 else {
-                                    x = jiraPattern == null ? null : StringUtils.replacePattern(text, jiraPattern, ws.getJiraUrl());
-                                    rt.addActivity(x == null ? text : x);
+                                    x = StringUtils.replacePattern(text, jiraPattern, ws.getJiraUrl());
+                                    rt.addActivity(x);
                                 }
                             }
                         }
                         if (dayTask.putIfAbsent(t, 1) == null)
-                            rd.addActivity(t.getName());
+                            rd.addActivity(StringUtils.replacePattern(t.getName(), jiraPattern, ws.getJiraUrl()));
                     }
 
                 }

@@ -5,6 +5,7 @@ import prip.utils.Jsonable;
 import prip.utils.StringUtils;
 
 import java.util.Date;
+import java.util.regex.Pattern;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Task implements Jsonable {
@@ -88,4 +89,5 @@ public class Task implements Jsonable {
     public void setLastActive(Date lastActive) {
         this.lastActive = lastActive;
     }
+
 }

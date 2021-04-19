@@ -2,6 +2,9 @@ $(function() {
     var ws = {tasks: []};
     var chg = false;
     var errTO = null;
+    var autoSaveTO = null;
+    var autoSaveBlock = false;
+
 
     var showError = function(msg) {
         $('.error-message').css('display', '').find('span').text(msg);
@@ -116,10 +119,19 @@ $(function() {
                 if (!def(d.id)) {
                     $.getJSON("/workspace/task?name=" + $(this).val(), function(s) {
                         if (s != null) {
-                            name.val(d.name = s.name);
-                            descr.val(d.descr = s.descr);
-                            est.val(d.estimate = s.estimate);
-                            id.text('#' + (d.id = s.id));
+                            var found = false;
+                            for (var i = 0; !found && i < ws.tasks.length; i++) {
+                                if (ws.tasks[i].id == s.id) {
+                                    found = true;
+                                    showError('The ' + name.val() + ' is already pinned.');
+                                }
+                            }
+                            if (!found) {
+                                name.val(d.name = s.name);
+                                descr.val(d.descr = s.descr);
+                                est.val(d.estimate = s.estimate);
+                                id.text('#' + (d.id = s.id));
+                            }
                         }
                     });
                 }
@@ -142,7 +154,7 @@ $(function() {
             .click(function() {
                 logWork(d.id, null, text);
             });
-        var log = $('<a href=# title="Log without time" class="log"/>').text('#com').appendTo($('<span>').appendTo(ctrl))
+        var log = $('<a href=# title="Record commit hash" class="log"/>').text('#com').appendTo($('<span>').appendTo(ctrl))
             .click(function() {
                 if (text.val().length == 0)
                     showError('Set an activity description.');
@@ -199,13 +211,22 @@ $(function() {
         var cd = dateStr(date);
         var card = $('<div class="card shadow-sm c-report-sum"/>').appendTo(t);
         var a = $('<a href=#/>').text(cd).data('date', date).appendTo($('<div/>').appendTo(card))
-            .click(function() { loadWorkspace( $(this).data('date') ); });
+            .click(function() { switchDay( $(this).data('date') ); });
         var txt = $('<textarea/>').val(wday.activities).appendTo($('<div/>').appendTo(card)).change(function() {
             set('activities', txt.val(), wday);
         });
     }
 
+    var switchDay = function(date) {
+        set('current', date);
+        showTasks(ws);
+    }
+
     var loadWorkspace = function(date) {
+        if (chg) {
+            showError('Unsaved changes found. Save first, or refresh the browser');
+            return;
+        }
         var url = "/workspace/data";
         if (def(date))
             url += '?date=' + (typeof date == 'string' ? date : dateStr(date));
@@ -256,19 +277,36 @@ $(function() {
         return r;
     }
 
+    var clearAutosave = function() {
+        if (def(autoSaveTO)) {
+            clearTimeout(autoSaveTO);
+            autoSaveTO = null;
+        }
+    }
+
     var saveWorkspace = function() {
+        clearAutosave();
+        $(':focus').blur();// drop focus
         var data = JSON.stringify(copyData(ws));
         $.post("/workspace/save", data, function(d) {
-            if (d.error)
+            if (d.error) {
                 showError(d.error);
-            else if (d.ok)
+                autoSaveBlock = true;
+            }
+            else if (d.ok) {
+                autoSaveBlock = false;
                 changed(false);
+                loadWorkspace(); // reload all
+            }
         }, "json");
     }
 
     var changed = function(ch) { // something has changed
         chg = ch;
         $('.fn-save-ws').css('display', ch ? '' : 'none');
+        clearAutosave();
+        if (ch && ws.autosave && !autoSaveBlock)
+            autoSaveTO = setTimeout(function() { saveWorkspace(); }, 30000);
     }
 
     var checkToday = function() {
@@ -383,10 +421,15 @@ $(function() {
                 for (var j = 0; j < l; j++) {
                     var ar;
                     if (rows.length <= j) rows.push(ar = $('<tr/>').appendTo(t)); else ar = rows[j];
-                    var td = $('<td/>').text(day.activities[j]).appendTo(ar);
+                    var td = $('<td/>').append($.parseHTML(day.activities[j])).appendTo(ar);
                     if (j == l - 1 && l < maxRows)
                         td.attr('rowspan', maxRows - l + 1);
                 }
+            }
+            else {
+                var ar;
+                if (rows.length == 0) rows.push(ar = $('<tr/>').appendTo(t)); else ar = rows[0];
+                var td = $('<td/>').text(day.activities[j]).appendTo(ar).attr('rowspan', maxRows);
             }
 
         }
@@ -417,7 +460,7 @@ $(function() {
 
     var guiInit = function() {
         $('#heaven').click(function() {window.location = '/workspace';});
-        $('#ctrl #new-task').click(function() { newTask({pinned: true}, true)});
+        $('#ctrl #new-task').click(function() { newTask({pinned: true}, true); autoSaveBlock = true; });
 
         // main menu
         $('.fn-save-ws a').click(function() { saveWorkspace(); });
