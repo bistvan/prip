@@ -10,7 +10,7 @@ $(function() {
         $('.error-message').css('display', '').find('span').text(msg);
         if (def(errTO))
             clearTimeout(errTO);
-        errTO = setTimeout(function() {$('.error-message').hide(400);errTO = null}, 5000);
+        errTO = setTimeout(function() {$('.error-message').hide(400);errTO = null}, 3500);
     }
 
     var def = function(o) {
@@ -143,25 +143,25 @@ $(function() {
         var text = $('<input type=text class="form-control form-control-sm"  placeholder="Activity description"/>').appendTo(card);
         var ctrl = $('<div class="task-ctrl"/>').appendTo(card);
         var id = $('<span/>').text(def(d.id) ? '#' + d.id : '#NONE').appendTo(ctrl);
-        var logTime = $('<a href=# title="Log with time" class="log-with-time"/>').text('LogT').appendTo($('<span>').appendTo(ctrl))
+        var logTime = $('<button type="button" title="Log with time" class="btn btn-link btn-sm log-with-time"/>').text('LogT').appendTo($('<span>').appendTo(ctrl))
             .click(function() {
                 if (!def(ws.started))
                     showError('Timer is not started.');
                 else
                     logWork(d.id, def(ws.started) ? Math.trunc(((def(ws.stopped) ? ws.stopped : now()).getTime() - ws.started) / 1000) : null, text);
             });
-        var log = $('<a href=# title="Log without time" class="log"/>').text('Log').appendTo($('<span>').appendTo(ctrl))
+        var log = $('<button href=# title="Log without time" class="btn btn-link btn-sm log"/>').text('Log').appendTo($('<span>').appendTo(ctrl))
             .click(function() {
                 logWork(d.id, null, text);
             });
-        var log = $('<a href=# title="Record commit hash" class="log"/>').text('#com').appendTo($('<span>').appendTo(ctrl))
+        var log = $('<button href=# title="Record commit hash" class="btn btn-link btn-sm log"/>').text('#com').appendTo($('<span>').appendTo(ctrl))
             .click(function() {
                 if (text.val().length == 0)
                     showError('Set an activity description.');
                 else
                     logWork(d.id, null, text, '#');
             });
-        var unpin = $('<a href=# title="Unpin this task" class="unpin"/>').text('Unpin').appendTo($('<span>').appendTo(ctrl))
+        var unpin = $('<button href=# title="Unpin this task" class="btn btn-secondary btn-sm unpin"/>').text('Unpin').appendTo($('<span>').appendTo(ctrl))
             .click(function() {
                 if (def(d.id)) {
                     set("pinned", false, d);
@@ -380,8 +380,9 @@ $(function() {
         var url = "/workspace/report?date=" + (typeof date == 'string' ? date : dateStr(date));
         $.getJSON(url, function(d) {
             if (d.error) { alert(d.error); return; }
-            $('#hide-prip').css('display', '');
-            var r = $('#weekly-report').empty();
+            $('#hide-prip').show();
+            var subj = $('#weekly-report #subject').text(def(d.pripSubject) ? d.pripSubject : '');
+            var r = $('#weekly-report #body').empty();
 
             if (def(ws.supervisor))
             $('<h2>').text('Hi ' + ws.supervisor + '!').appendTo(r);
@@ -396,7 +397,7 @@ $(function() {
                 $('<h3>').text('Schedule for next week: ' + d.chunks[1].interval + ':').appendTo(r);
                 showTable(d.chunks[1]).appendTo(r);
             }
-            r.show(400);
+            $('#weekly-report').show(400);
         });
     }
     var showTable = function(chunk) {
@@ -469,12 +470,17 @@ $(function() {
         $('.fn-settings a').click(function() {
             if ($("#settings-panel").css('display') == 'none') {
                 $("#settings-panel").show( 400 );
-                $(this).text('Close settings');
             }
             else {
                 $("#settings-panel").hide( 400 );
-                $(this).text('Settings');
             }
+        });
+        $('.action-hide').click(function() {
+            var e = $(this);
+            var d = e.attr('data-depth');
+            if (def(d)) for (var i = parseInt(d); --i > 0;)
+                e = e.parent();
+            e.hide(400);
         });
 
         // date navigation
@@ -485,7 +491,7 @@ $(function() {
         $('#hide-prip').click(function() { $(this).css('display', 'none'); $('#weekly-report').hide(400); })
 
         // autoselect
-        $("#weekly-report").on('mouseup', function() {
+        $("#weekly-report #subject, #weekly-report #body").on('mouseup', function() {
         	var sel, range;
         	var el = $(this)[0];
         	if (window.getSelection && document.createRange) { //Browser compatibility

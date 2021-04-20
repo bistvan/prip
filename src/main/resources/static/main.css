@@ -62,8 +62,15 @@ span#current-date {
     font-size: 1.4em;
 }
 
-.error-message span {
-    padding: 2px 9px;
-    background-color: #efefef;
-    color: #990000;
+div.alert.fixed {
+    position: fixed;
+    width: 100%;
+    z-index:100;
+}
+
+button.btn-link:hover {
+    background-color: #0a58ca;
+    border-color: #0a58ca;
+    text-decoration: none;
+    color: #ffffff;
 }

@@ -107,7 +107,7 @@ public class WorkspaceActions implements ActionHolder {
             }
         }
         catch (PatternSyntaxException ex) {
-            throw new AppException("Couldn't compile JIRA Number pattern: " + ex.getMessage());
+            throw new AppException("Couldn't compile JIRA Number pattern: " + nws.getJiraNumber() + " : " + ex.getMessage());
         }
 
         try {
@@ -118,11 +118,13 @@ public class WorkspaceActions implements ActionHolder {
             }
         }
         catch (PatternSyntaxException ex) {
-            throw new AppException("Couldn't compile Commit pattern: " + ex.getMessage());
+            throw new AppException("Couldn't compile Commit pattern: " + nws.getGitHash() + " : " + ex.getMessage());
         }
 
         for (Task task: nws.getTasks()) {
             Task wt;
+            if (StringUtils.isEmpty(task.getName()))
+                throw new AppException("Task name is empty");
             if (task.getId() == 0 || (wt = ws.getTask(task.getId())) == null)
                 ws.addTask(task);
             else {
@@ -157,10 +159,20 @@ public class WorkspaceActions implements ActionHolder {
         Workspace ws = getCurrentWorkspace(ctx, true);
         Date date = ctx.optDate("date", DateUtils.instance().getDateFmt());
         ProgressReport prip = new ProgressReport();
-        prip.getChunks().add(getReportChunk(date, ws));
+        ReportChunk primary = getReportChunk(date, ws);
+        prip.getChunks().add(primary);
         ReportChunk next = getReportChunk(DateUtils.instance().addWeek(date, 1), ws);
         if (next.getTotalActivities() > 0)
             prip.getChunks().add(next);
+
+        if (!StringUtils.isEmpty(ws.getPripSubject())) {
+            try {
+                prip.setPripSubject(String.format(ws.getPripSubject(), ws.getDevName(), primary.getInterval()));
+            }
+            catch (Exception ex) {
+                prip.setPripSubject(ex.getClass().getName() + ": " + ex.getMessage());
+            }
+        }
 
         return prip.toJson();
     }
@@ -241,7 +253,8 @@ public class WorkspaceActions implements ActionHolder {
             chunk.addDay(d);
         }
         if (first != null)
-            chunk.setInterval(DateUtils.instance().getDateFmt().format(first) + " and " + DateUtils.instance().getDayOfMonthFmt().format(last));
+            chunk.setInterval(DateUtils.instance().getDateDotFmt().format(first) + " - "
+                + DateUtils.instance().getDayOfMonthDotFmt().format(last));
 
         return chunk;
     }

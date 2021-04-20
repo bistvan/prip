@@ -12,8 +12,9 @@ public class DateUtils {
     private static DateUtils INSTANCE = new DateUtils();
 
     private SimpleDateFormat dateSimpleTime;
-    private SimpleDateFormat day;
     private SimpleDateFormat date;
+    private SimpleDateFormat dateDot;
+    private SimpleDateFormat dayDot;
     private Calendar cal;
 
     public static DateUtils instance() {
@@ -21,23 +22,30 @@ public class DateUtils {
     }
 
     public SimpleDateFormat getDateFmt() {
-        SimpleDateFormat f = dateSimpleTime;
+        SimpleDateFormat f = date;
         if (f == null)
-            dateSimpleTime = f = new DF("yyyy-MM-dd");
+            date = f = new DF("yyyy-MM-dd");
         return f;
     }
 
     public SimpleDateFormat getDateSimpleTimeFmt() {
-        SimpleDateFormat f = date;
+        SimpleDateFormat f = dateSimpleTime;
         if (f == null)
-            date = f = new DF("yyyy-MM-dd'T'HH:mm");
+            dateSimpleTime = f = new DF("yyyy-MM-dd'T'HH:mm");
         return f;
     }
 
-    public SimpleDateFormat getDayOfMonthFmt() {
-        SimpleDateFormat f = day;
+    public SimpleDateFormat getDateDotFmt() {
+        SimpleDateFormat f = dateDot;
         if (f == null)
-            day = f = new DF("MM-dd");
+            dateDot = f = new DF("yyyy.MM.dd");
+        return f;
+    }
+
+    public SimpleDateFormat getDayOfMonthDotFmt() {
+        SimpleDateFormat f = dayDot;
+        if (f == null)
+            dayDot = f = new DF("MM.dd");
         return f;
     }
 

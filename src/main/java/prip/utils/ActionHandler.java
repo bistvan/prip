@@ -90,7 +90,8 @@ public class ActionHandler extends AbstractHandler {
                 catch (Exception e) {
                     Throwable t = e instanceof WrapperException ? ((WrapperException) e).unwrap() : e;
 
-                    log.log(Level.SEVERE, "Process went wrong", t);
+                    if (!(e instanceof AppException))
+                        log.log(Level.SEVERE, "Process went wrong", t);
                     if (action.isJson()) {
                         response.getWriter()
                             .append(new JsonResult(t.getClass().getName() + ": " + t.getMessage()).toJson());

@@ -25,6 +25,7 @@ public class Workspace implements Jsonable {
     private int nextTaskId;
     private String devName;
     private String supervisor;
+    private String pripSubject;
     private Date current;
     private Date started;
     private Date stopped;
@@ -47,6 +48,7 @@ public class Workspace implements Jsonable {
         this.id = ws.id;
         this.devName = ws.devName;
         this.supervisor = ws.supervisor;
+        this.pripSubject = ws.pripSubject;
         this.started = ws.started;
         this.stopped = ws.stopped;
         this.current = ws.current;
@@ -104,6 +106,7 @@ public class Workspace implements Jsonable {
 
         res.setJiraNumber("(\bAAA\b)-[0-9]{1,6}");
         res.setGitHash("#[a-f0-9]{7,40}");
+        res.setPripSubject("Progress Report; name: %s; date: %s");
 
         res.save();
 
@@ -177,6 +180,14 @@ public class Workspace implements Jsonable {
 
     public void setSupervisor(String supervisor) {
         this.supervisor = supervisor;
+    }
+
+    public String getPripSubject() {
+        return pripSubject;
+    }
+
+    public void setPripSubject(String pripSubject) {
+        this.pripSubject = pripSubject;
     }
 
     public Date getCurrent() {
