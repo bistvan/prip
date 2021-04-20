@@ -212,7 +212,7 @@ $(function() {
         var card = $('<div class="card shadow-sm c-report-sum"/>').appendTo(t);
         var a = $('<a href=#/>').text(cd).data('date', date).appendTo($('<div/>').appendTo(card))
             .click(function() { switchDay( $(this).data('date') ); });
-        var txt = $('<textarea/>').val(wday.activities).appendTo($('<div/>').appendTo(card)).change(function() {
+        var txt = $('<textarea class="form-control"/>').val(wday.activities).appendTo($('<div/>').appendTo(card)).change(function() {
             set('activities', txt.val(), wday);
         });
     }
