@@ -210,8 +210,13 @@ $(function() {
             t.addClass('current-day');
         var cd = dateStr(date);
         var card = $('<div class="card shadow-sm c-report-sum"/>').appendTo(t);
-        var a = $('<a href=#/>').text(cd).data('date', date).appendTo($('<div/>').appendTo(card))
+        var ctrl = $('<div/>').appendTo(card);
+        var a = $('<button type="button" title="Select date" class="btn btn-link btn-sm select-day">').text(cd).data('date', date).appendTo(ctrl)
             .click(function() { switchDay( $(this).data('date') ); });
+        var cl = $('<button type="button" title="Clear text" class="btn btn-link btn-sm">').text('Clear').appendTo(ctrl).click(function() {
+            txt.val('');
+            set('activities', '', wday);
+        });
         var txt = $('<textarea class="form-control"/>').val(wday.activities).appendTo($('<div/>').appendTo(card)).change(function() {
             set('activities', txt.val(), wday);
         });
