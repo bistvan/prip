@@ -1,6 +1,8 @@
 package prip;
 
 import jakarta.servlet.http.Cookie;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.*;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.MimeTypes;
 import org.stringtemplate.v4.ST;
@@ -188,52 +190,43 @@ public class WorkspaceActions implements ActionHolder {
             ReportDay rd = new ReportDay(d.getDate());
             days[DateUtils.instance().getDayOfWeek(d.getDate()) - 1] = rd;
 
-            String s = d.getActivities();
             IdentityHashMap<Task, Integer> dayTask = new IdentityHashMap<>();
-            if (!StringUtils.isEmpty(s)) {
-                try {
-                    for (String aRow : s.split("\n")) {
-                        aRow = aRow.trim();
-                        if (StringUtils.isEmpty(aRow))
-                            continue;
-                        String[] act = aRow.split(",", 3);
-                        Task t = taskLookup.get(Integer.parseInt(act[0]));
-                        if (t == null)
-                            throw new Exception("Unknown task ID: '" + act[0] + '\'');
+            try {
+                for (String[] act : d.activities()) {
+                    Task t = taskLookup.get(Integer.parseInt(act[0]));
+                    if (t == null)
+                        throw new Exception("Unknown task ID: '" + act[0] + '\'');
 
-                        ReportTask rt = tasks.computeIfAbsent(t.getId(), integer -> {
-                            String title = StringUtils.replacePattern(t.title(), jiraPattern, ws.getJiraUrl());
-                            ReportTask r = new ReportTask(title, t.getEstimate());
-                            chunk.addTask(r);
-                            return r;
-                        });
+                    ReportTask rt = tasks.computeIfAbsent(t.getId(), integer -> {
+                        String title = StringUtils.replacePattern(t.title(), jiraPattern, ws.getJiraUrl());
+                        ReportTask r = new ReportTask(title, t.getEstimate());
+                        chunk.addTask(r);
+                        return r;
+                    });
 
-                        chunk.addActivity();
-                        if (act.length > 1) {
-                            if (!StringUtils.isEmpty(act[1])) {
-                                int spent = Integer.parseInt(act[1]);
-                                rt.addSpentTime(spent);
-                                chunk.addSpentTime(spent);
-                            }
-                            String text;
-                            if (act.length > 2 && !StringUtils.isEmpty(text = act[2])) {
-                                String x = StringUtils.replacePattern(text, commitPattern, ws.getGitUrl());
-                                if (x != text) // replace returned the same instance if no match
-                                    rt.addCommit(x);
-                                else {
-                                    x = StringUtils.replacePattern(text, jiraPattern, ws.getJiraUrl());
-                                    rt.addActivity(x);
-                                }
-                            }
-                        }
-                        if (dayTask.putIfAbsent(t, 1) == null)
-                            rd.addActivity(StringUtils.replacePattern(t.getName(), jiraPattern, ws.getJiraUrl()));
+                    chunk.addActivity();
+                    if (!StringUtils.isEmpty(act[1])) {
+                        int spent = Integer.parseInt(act[1]);
+                        rt.addSpentTime(spent);
+                        chunk.addSpentTime(spent);
                     }
+                    String text;
+                    if (!StringUtils.isEmpty(text = act[2])) {
+                        String x = StringUtils.replacePattern(text, commitPattern, ws.getGitUrl());
+                        if (x != text) // replace returned the same instance if no match
+                            rt.addCommit(x);
+                        else {
+                            x = StringUtils.replacePattern(text, jiraPattern, ws.getJiraUrl());
+                            rt.addActivity(x);
+                        }
+                    }
+                    if (dayTask.putIfAbsent(t, 1) == null)
+                        rd.addActivity(StringUtils.replacePattern(t.getName(), jiraPattern, ws.getJiraUrl()));
+                }
 
-                }
-                catch (Exception e) {
-                    rd.addActivity(e.getClass().getName() + ": " + e.getMessage());
-                }
+            }
+            catch (Exception e) {
+                rd.addActivity(e.getClass().getName() + ": " + e.getMessage());
             }
         }
 
@@ -257,6 +250,91 @@ public class WorkspaceActions implements ActionHolder {
                 + DateUtils.instance().getDayOfMonthDotFmt().format(last));
 
         return chunk;
+    }
+
+    @HtAction(path = "/workspace/monthlyReport.xls", customMime = "application/vnd.ms-excel")
+    public void monthlyExcelReport(HtContext ctx) throws IOException {
+        Workspace ws = getCurrentWorkspace(ctx, true);
+        Date d = ctx.optDate("date", DateUtils.instance().getDateFmt());
+        if (d == null)
+            d = new Date();
+        Workbook wb = new HSSFWorkbook();
+        Sheet sheet = wb.createSheet("Monthly report");
+
+        int rowCount = 0;
+        // header
+        Row row = sheet.createRow(rowCount++);
+        Cell cell = row.createCell(0);
+        cell.setCellValue("Date");
+        cell = row.createCell(1);
+        cell.setCellValue("Task");
+        cell = row.createCell(2);
+        cell.setCellValue("Hours");
+
+        CellStyle wrap = wb.createCellStyle();
+        wrap.setWrapText(true);
+        cell.setCellStyle(wrap);
+
+        Date month = DateUtils.instance().getMonth(d);
+        Date next = DateUtils.instance().addMonth(month, 1);
+
+        ArrayList<Day> days = ws.getMonthDays(month, next);
+        int dsize = days.size();
+        HashMap<Integer, Task> tasks = ws.taskLookup();
+        int index = 0;
+        int taskChars = 60;
+        for (long dtime = month.getTime(); dtime < next.getTime(); dtime += DateUtils.MILLIS_PER_DAY, rowCount++) {
+            row = sheet.createRow(rowCount);
+            Date dayDate = new Date(dtime);
+            while (index < dsize && days.get(index).getDate().getTime() < dtime)
+                index++;
+            Day day =  index < dsize && DateUtils.instance().sameDay(days.get(index).getDate(), dayDate) ?
+                days.get(index) : null;
+
+            row.createCell(0).setCellValue(DateUtils.instance().getDateFmt().format(dayDate));
+            StringBuilder b = new StringBuilder();
+            double spent = 0;
+            int lines = 0;
+            if (day != null) {
+                IdentityHashMap<Task, StringBuilder> daytask = new IdentityHashMap<>();
+                ArrayList<StringBuilder> bl = new ArrayList<>();
+                for (String[] act : day.activities()) {
+                    Task task = tasks.get(Integer.parseInt(act[0]));
+                    if (task == null)
+                        continue;
+
+                    StringBuilder tb = daytask.get(task);
+                    if (tb == null) {
+                        daytask.put(task, tb = new StringBuilder().append(task.title()));
+                        bl.add(tb);
+                    }
+                    if (!StringUtils.isEmpty(act[1]))
+                        spent += Integer.parseInt(act[1]);
+                    if (!StringUtils.isEmpty(act[2]))
+                        tb.append("; ").append(act[2]);
+                }
+                int n = lines = bl.size();
+                for (int i = 0; i < n; i++) {
+                    if (b.length() != 0)
+                        b.append('\n');
+                    String line = bl.get(i).toString();
+                    b.append(line);
+                    lines += line.length() / taskChars;
+                }
+            }
+            cell = row.createCell(1);
+            cell.setCellValue(b.toString());
+            if (lines > 1) {
+                cell.setCellStyle(wrap);
+                row.setHeightInPoints(lines * sheet.getDefaultRowHeightInPoints());
+            }
+            row.createCell(2).setCellValue(Math.round(spent / 360) / 10d);
+        }
+        sheet.setColumnWidth(0, 256 * 15);
+        sheet.setColumnWidth(1, 256 * taskChars);
+        sheet.setColumnWidth(2, 256 * 8);
+
+        wb.write(ctx.response.getOutputStream());
     }
 
     private static Cookie getCookie(HtContext ctx) {

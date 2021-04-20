@@ -34,7 +34,7 @@ public class ActionHandler extends AbstractHandler {
                         if (val == null)
                             throw new IllegalArgumentException("Value is null");
 
-                        HttpAction action = HttpAction.staticAction(anno.mime(), val);
+                        HttpAction action = HttpAction.staticAction(anno.mime(), anno.customMime(), val);
                         register(action, anno);
                     } catch (IllegalAccessException e) {
                         log.log(Level.WARNING, "Couldn't process: " + anno.path(), e);
@@ -50,14 +50,14 @@ public class ActionHandler extends AbstractHandler {
     private void register(Method m, Object o) {
         HtAction anno = m.getAnnotation(HtAction.class);
         if (anno != null && m.canAccess(o)) {
-            HttpAction action = HttpAction.methodAction(o, m, anno.mime());
+            HttpAction action = HttpAction.methodAction(o, m, anno.mime(), anno.customMime());
             register(action, anno);
         }
     }
 
     public void register(Method m, Object o, MimeTypes.Type mime, String path, HttpMethod... method) {
         if (m.canAccess(o)) {
-            HttpAction action = HttpAction.methodAction(o, m, mime);
+            HttpAction action = HttpAction.methodAction(o, m, mime, null);
             register(action, path, method);
         }
     }

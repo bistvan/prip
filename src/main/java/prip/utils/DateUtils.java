@@ -119,6 +119,14 @@ public class DateUtils {
         return c.getTime();
     }
 
+    public Date getMonth(Date d) {
+        Calendar c = clearTime(d);
+        int day = c.get(Calendar.DAY_OF_MONTH);
+        if (day > 0)
+            c.add(Calendar.DAY_OF_MONTH, -day + 1);
+        return c.getTime();
+    }
+
     public int getDayOfWeek(Date d) {
         Calendar c = calendar(d);
         return c.get(Calendar.DAY_OF_WEEK);
@@ -127,6 +135,12 @@ public class DateUtils {
     public Date addWeek(Date d, int count) {
         Calendar c = calendar(d);
         c.add(Calendar.WEEK_OF_YEAR, count);
+        return c.getTime();
+    }
+
+    public Date addMonth(Date d, int count) {
+        Calendar c = calendar(d);
+        c.add(Calendar.MONTH, count);
         return c.getTime();
     }
 

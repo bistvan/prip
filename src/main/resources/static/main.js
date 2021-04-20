@@ -255,6 +255,7 @@ $(function() {
                 }
             });
             showTasks(ws);
+            $('#download-monthly').attr('href', '/workspace/monthlyReport.xls?date=' + dateStr(curDay())).show();
             changed(false);
         });
     }

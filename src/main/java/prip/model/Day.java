@@ -1,7 +1,9 @@
 package prip.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import prip.utils.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Date;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -26,6 +28,24 @@ public class Day implements Comparable {
 
     public void setActivities(String activities) {
         this.activities = activities;
+    }
+
+    public String[][] activities() {
+        String s = getActivities();
+        if (StringUtils.isEmpty(s))
+            return new String[0][];
+        ArrayList<String[]> r = new ArrayList<>();
+        for (String row : s.split("\n")) {
+            if (StringUtils.isEmpty(row = row.trim()))
+                continue;
+            String[] a = row.split(",", 3);
+            if (a.length < 3) {
+                String[] b = new String[3];
+                System.arraycopy(a, 0, b, 0, a.length);
+            }
+            r.add(a);
+        }
+        return r.toArray(new String[r.size()][]);
     }
 
     @Override

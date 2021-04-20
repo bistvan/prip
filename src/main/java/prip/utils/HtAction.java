@@ -18,4 +18,6 @@ public @interface HtAction {
     String[] path();
 
     MimeTypes.Type mime() default MimeTypes.Type.TEXT_HTML_UTF_8;
+
+    String customMime() default "";
 }

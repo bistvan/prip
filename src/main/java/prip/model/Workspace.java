@@ -323,6 +323,16 @@ public class Workspace implements Jsonable {
     public ArrayList<Day> getWeekDays(Date date) {
         long start = DateUtils.instance().getWeek(date).getTime();
         long end = DateUtils.instance().getWeek(date).getTime() + (7 * DateUtils.MILLIS_PER_DAY);
+        return getDays(start, end);
+    }
+
+    public ArrayList<Day> getMonthDays(Date d1, Date d2) {
+        long start = d1.getTime();
+        long end = d2.getTime();
+        return getDays(start, end);
+    }
+
+    public ArrayList<Day> getDays(long start, long end) {
         ArrayList<Day> result = new ArrayList<>();
         if (this.days != null) {
             for (int i = 0, n = this.days.size(); i < n; i++) {

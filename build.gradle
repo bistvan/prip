@@ -19,6 +19,8 @@ dependencies {
     implementation group: 'org.eclipse.jetty', name: 'jetty-server', version: '11.0.2'
     // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.0.1'
+    // https://mvnrepository.com/artifact/org.apache.poi/poi
+    implementation group: 'org.apache.poi', name: 'poi', version: '5.0.0'
     // https://mvnrepository.com/artifact/org.antlr/stringtemplate
     implementation group: 'org.antlr', name: 'stringtemplate', version: '4.0'
 
