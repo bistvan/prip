@@ -82,7 +82,7 @@ $(function() {
             return sec + 's';
         if (sec < 3600)
             return pad(Math.trunc(sec / 60)) + ':' + pad(Math.trunc(sec % 60));
-        return pad(Math.trunc(sec / 3600)) + ':' + pad(Math.trunc(sec % 3600 / 60));
+        return Math.trunc(sec / 3600) + ':' + pad(Math.trunc(sec % 3600 / 60)) + ':' + pad(Math.trunc(sec % 60));
     }
     var dateStr = function(d, x) {
         var t = d.getTime() - (d.getTimezoneOffset() * 60000);
@@ -192,6 +192,7 @@ $(function() {
         }
 
         var start = curWeek();
+        var workTime = 0;
         for (var i = 1; i < 7; i++) {
             var date = addDay(start, i);
             var wday = wsDay(date);
@@ -199,7 +200,20 @@ $(function() {
                 ws.days.push(wday = {date: date, activities:''});
             wday.day = i;
             showDaytask(date, wday);
+            if (def(wday.activities)) {
+                var rows = wday.activities.split('\n');
+                var len = 0;
+                for (var j = 0; j < rows.length; j++) {
+                    var a = rows[j].split(',');
+                    if (a.length >= 2) {
+                        var sec = parseInt(a[1]);
+                        if (!isNaN(sec))
+                            workTime += sec;
+                    }
+                }
+            }
         }
+        $('.work-hours i').text('(hours: ' + timeStr(workTime) + ')');
         $('#current-date').text(dateStr(curDay()));
         startStop(false);
     }
