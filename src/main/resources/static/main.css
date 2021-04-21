@@ -51,6 +51,7 @@ span#current-date {
     padding: 3px 7px;
     font-family: inherit;
     color: inherit;
+    vertical-align: top;
 }
 
 .prip-details {

@@ -49,8 +49,8 @@ $(function() {
         if (t < 60)
             return '1 min.';
         if (t < 3600)
-            return Math.round(t / 60) + 'mins.';
-        return (Math.round(t / 360) / 10) + 'hours';
+            return Math.round(t / 60) + ' mins.';
+        return (Math.round(t / 360) / 10) + ' hours';
     }
     var wsDay = function(d) { // workspace day
         if (!def(d)) d = new Date();

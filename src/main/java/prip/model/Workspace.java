@@ -105,7 +105,7 @@ public class Workspace implements Jsonable {
         res.addTask(new Task(res.nextTaskId(), true, "Status meeting"));
 
         res.setJiraNumber("(\bAAA\b)-[0-9]{1,6}");
-        res.setGitHash("#[a-f0-9]{7,40}");
+        res.setGitHash("#([a-f0-9]{7,40})");
         res.setPripSubject("Progress Report; name: %s; date: %s");
 
         res.save();
