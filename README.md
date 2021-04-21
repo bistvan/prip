@@ -5,6 +5,6 @@ Progress Report generator
 - clone the repo
 - export JAVA_HOME=Path TO Java
 - [Linux] on repo root: chmod +x gradlew
-- [Linux] on repo root : gradlew run
+- [Linux] on repo root : ./gradlew run
 - [Windows] on repo root: gradlew.bat run
 - your browser: http://localhost:8181/
