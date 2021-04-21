@@ -173,7 +173,8 @@ public class StringUtils {
                     b.append(s, index, m.start());
                 index = m.end();
 
-                String g = m.group(0);
+                // If there are groups in the matcher we use the first one. Otherwise we use the whole match.
+                String g = m.groupCount() > 0 ? m.group(1) : m.group(0);
                 b.append(String.format(format, g, g.length() < 11 ? g : g.substring(0, 11)));
             }
             if (b != null) {
