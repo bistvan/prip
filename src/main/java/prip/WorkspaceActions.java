@@ -11,6 +11,7 @@ import prip.utils.JsonResult;
 import prip.utils.*;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -169,7 +170,8 @@ public class WorkspaceActions implements ActionHolder {
 
         if (!StringUtils.isEmpty(ws.getPripSubject())) {
             try {
-                prip.setPripSubject(String.format(ws.getPripSubject(), ws.getDevName(), primary.getInterval()));
+                MessageFormat fmt = new MessageFormat(ws.getPripSubject());
+                prip.setPripSubject(fmt.format(new String[] {ws.getDevName(), primary.getInterval()}));
             }
             catch (Exception ex) {
                 prip.setPripSubject(ex.getClass().getName() + ": " + ex.getMessage());
@@ -192,36 +194,34 @@ public class WorkspaceActions implements ActionHolder {
 
             IdentityHashMap<Task, Integer> dayTask = new IdentityHashMap<>();
             try {
-                for (String[] act : d.activities()) {
-                    Task t = taskLookup.get(Integer.parseInt(act[0]));
+                for (Activity act : d.activities()) {
+                    Task t = taskLookup.get(act.getTask());
                     if (t == null)
-                        throw new Exception("Unknown task ID: '" + act[0] + '\'');
+                        throw new Exception("Unknown task ID: '" + act.getTask() + '\'');
 
                     ReportTask rt = tasks.computeIfAbsent(t.getId(), integer -> {
-                        String title = StringUtils.replacePattern(t.title(), jiraPattern, ws.getJiraUrl());
+                        String title = StringUtils.replacePattern(t.title(), jiraPattern, ws.jiraUrlFmt());
                         ReportTask r = new ReportTask(title, t.getEstimate());
                         chunk.addTask(r);
                         return r;
                     });
 
                     chunk.addActivity();
-                    if (!StringUtils.isEmpty(act[1])) {
-                        int spent = Integer.parseInt(act[1]);
-                        rt.addSpentTime(spent);
-                        chunk.addSpentTime(spent);
-                    }
+                    rt.addSpentTime(act.getSeconds());
+                    chunk.addSpentTime(act.getSeconds());
+
                     String text;
-                    if (!StringUtils.isEmpty(text = act[2])) {
-                        String x = StringUtils.replacePattern(text, commitPattern, ws.getGitUrl());
+                    if (!StringUtils.isEmpty(text = act.getText())) {
+                        String x = StringUtils.replacePattern(text, commitPattern, ws.gitUrlFmt());
                         if (x != text) // replace returned the same instance if no match
                             rt.addCommit(x);
                         else {
-                            x = StringUtils.replacePattern(text, jiraPattern, ws.getJiraUrl());
+                            x = StringUtils.replacePattern(text, jiraPattern, ws.jiraUrlFmt());
                             rt.addActivity(x);
                         }
                     }
                     if (dayTask.putIfAbsent(t, 1) == null)
-                        rd.addActivity(StringUtils.replacePattern(t.getName(), jiraPattern, ws.getJiraUrl()));
+                        rd.addActivity(StringUtils.replacePattern(t.getName(), jiraPattern, ws.jiraUrlFmt()));
                 }
 
             }
@@ -298,8 +298,8 @@ public class WorkspaceActions implements ActionHolder {
             if (day != null) {
                 IdentityHashMap<Task, StringBuilder> daytask = new IdentityHashMap<>();
                 ArrayList<StringBuilder> bl = new ArrayList<>();
-                for (String[] act : day.activities()) {
-                    Task task = tasks.get(Integer.parseInt(act[0]));
+                for (Activity act : day.activities()) {
+                    Task task = tasks.get(act.getTask());
                     if (task == null)
                         continue;
 
@@ -308,10 +308,9 @@ public class WorkspaceActions implements ActionHolder {
                         daytask.put(task, tb = new StringBuilder().append(task.title()));
                         bl.add(tb);
                     }
-                    if (!StringUtils.isEmpty(act[1]))
-                        spent += Integer.parseInt(act[1]);
-                    if (!StringUtils.isEmpty(act[2]))
-                        tb.append("; ").append(act[2]);
+                    spent += act.getSeconds();
+                    if (!StringUtils.isEmpty(act.getText()))
+                        tb.append("; ").append(act.getText());
                 }
                 int n = lines = bl.size();
                 for (int i = 0; i < n; i++) {

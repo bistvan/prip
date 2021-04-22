@@ -5,9 +5,12 @@ import prip.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.logging.Logger;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Day implements Comparable {
+    protected static Logger log = Logger.getLogger(Day.class.getName());
+
     private Date date;
     private String activities;
 
@@ -30,22 +33,40 @@ public class Day implements Comparable {
         this.activities = activities;
     }
 
-    public String[][] activities() {
+    public ArrayList<Activity> activities() {
         String s = getActivities();
+        ArrayList<Activity> r = new ArrayList<>();
         if (StringUtils.isEmpty(s))
-            return new String[0][];
-        ArrayList<String[]> r = new ArrayList<>();
+            return r;
+
         for (String row : s.split("\n")) {
             if (StringUtils.isEmpty(row = row.trim()))
                 continue;
             String[] a = row.split(",", 3);
-            if (a.length < 3) {
-                String[] b = new String[3];
-                System.arraycopy(a, 0, b, 0, a.length);
+            try {
+                Activity act = new Activity();
+                act.setTask(Integer.parseInt(a[0]));
+                if (a.length > 1 && !StringUtils.isEmpty(a[1])) {
+                    String time = a[1];
+                    int mul = 1;
+                    if (time.endsWith("m"))
+                        mul = 60;
+                    if (time.endsWith("h"))
+                        mul = 3600;
+                    if (mul > 1)
+                        time = time.substring(0, time.length() - 1);
+                    act.setSeconds(mul * Integer.parseInt(time));
+                }
+                if (a.length > 2)
+                    act.setText(a[2]);
+                r.add(act);
             }
-            r.add(a);
+            catch (Exception ex) {
+                // don't care too much
+                log.warning("erAXD " + ex.getClass().getName() + ": " + ex.getMessage());
+            }
         }
-        return r.toArray(new String[r.size()][]);
+        return r;
     }
 
     @Override

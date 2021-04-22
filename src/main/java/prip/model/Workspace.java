@@ -7,10 +7,14 @@ import prip.utils.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.*;
+import java.util.logging.Logger;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Workspace implements Jsonable {
+    protected static Logger log = Logger.getLogger(Workspace.class.getName());
+
     public static final List EMPTY = Arrays.asList();
     private static final HashMap<String, Workspace> CACHE = new HashMap<>();
 
@@ -105,7 +109,9 @@ public class Workspace implements Jsonable {
         res.addTask(new Task(res.nextTaskId(), true, "Status meeting"));
 
         res.setJiraNumber("(\bAAA\b)-[0-9]{1,6}");
-        res.setGitHash("#([a-f0-9]{7,40})");
+        res.setJiraUrl("<a href=\"https://YOUR-JIRA.tld/path/{0}\">{0}</a>");
+        res.setGitHash("#([a-f0-9]{7,11})([a-f0-9]{0,29})");
+        res.setGitHash("<a href=\"https://github.com/YOUR_ORG/YOUR_PROJECT/commit/{1}{2}\">#{1}</a>");
         res.setPripSubject("Progress Report; name: %s; date: %s");
 
         res.save();
@@ -123,17 +129,8 @@ public class Workspace implements Jsonable {
                 it.remove();
             }
             else {
-                for (String a : d.getActivities().split("\n")) {
-                    if (StringUtils.isEmpty(a)) continue;
-                    String [] b = a.split(",");
-                    if (StringUtils.isEmpty(b[0])) continue;
-                    try {
-                        t.remove(Integer.parseInt(b[0]));
-                    }
-                    catch (Exception ex) {
-                        // don't care
-                    }
-                }
+                for (Activity act : d.activities())
+                    t.remove(act.getTask());
             }
         }
         for (Iterator<Task> it = getTasks().iterator(); it.hasNext();) {
@@ -253,6 +250,15 @@ public class Workspace implements Jsonable {
     public void setGitUrl(String gitUrl) {
         this.gitUrl = gitUrl;
     }
+
+    public MessageFormat jiraUrlFmt() {
+        return new MessageFormat(jiraUrl);
+    }
+
+    public MessageFormat gitUrlFmt() {
+        return new MessageFormat(gitUrl);
+    }
+
 
     public void addTask(Task t) {
         Objects.requireNonNull(t);

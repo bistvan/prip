@@ -206,7 +206,15 @@ $(function() {
                 for (var j = 0; j < rows.length; j++) {
                     var a = rows[j].split(',');
                     if (a.length >= 2) {
-                        var sec = parseInt(a[1]);
+                        var time = a[1];
+                        var mul = 1;
+                        if (time.endsWith("m"))
+                            mul = 60;
+                        if (time.endsWith("h"))
+                            mul = 3600;
+                        if (mul > 1)
+                            time = time.substring(0, time.length - 1);
+                        var sec = parseInt(time) * mul;
                         if (!isNaN(sec))
                             workTime += sec;
                     }
