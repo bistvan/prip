@@ -41,26 +41,14 @@ span#current-date {
     color: inherit;
 }
 .prip-tab .prip-head {
-    background-color: #333399;
-    font-size:1.4em;
-    font-weight: bold;
 }
 .prip-tab td {
-    border-top: 1px solid #333366;
-    border-right: 1px solid #333366;
-    padding: 3px 7px;
-    font-family: inherit;
-    color: inherit;
-    vertical-align: top;
 }
 
 .prip-details {
 }
 
 .prip-details .task-title {
-    text-decoration: underline;
-    font-weight: bold;
-    font-size: 1.4em;
 }
 
 div.alert.fixed {
