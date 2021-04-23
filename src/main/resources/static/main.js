@@ -444,13 +444,13 @@ $(function() {
         }
         for (var i = start; i < end; i++) {
             var day = chunk.days[i];
-            $('<td/>').text(day.name).appendTo(head);
+            $('<td style="border: 1px solid #333366; padding: 3px 7px; vertical-align: top; background-color: #333399; font-size: 1.4em; font-weight: bold;"/>').text(day.name).appendTo(head);
             var l = def(day.activities) ? day.activities.length : 0;
             if (l) {
                 for (var j = 0; j < l; j++) {
                     var ar;
                     if (rows.length <= j) rows.push(ar = $('<tr/>').appendTo(t)); else ar = rows[j];
-                    var td = $('<td/>').append($.parseHTML(day.activities[j])).appendTo(ar);
+                    var td = $('<td style="border: 1px solid #333366; padding: 3px 7px; vertical-align: top;"/>').append($.parseHTML(day.activities[j])).appendTo(ar);
                     if (j == l - 1 && l < maxRows)
                         td.attr('rowspan', maxRows - l + 1);
                 }
@@ -470,7 +470,7 @@ $(function() {
         for (var i = 0; i < chunk.tasks.length; i++) {
             var task = chunk.tasks[i];
             var tb = $('<p class="task-block">').appendTo(r);
-            $('<span class="task-title">').append($.parseHTML(task.title)).appendTo(tb); tb.append('<br/>');
+            $('<span class="task-title" style="text-decoration: underline; font-weight: bold; font-size: 1.4em;">').append($.parseHTML(task.title)).appendTo(tb); tb.append('<br/>');
             if (def(task.activities)) {
                 for (var j = 0; j < task.activities.length; j++) {
                     $('<span class="task-activity">').append($.parseHTML(task.activities[j])).appendTo(tb); tb.append('<br/>');
