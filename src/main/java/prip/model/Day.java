@@ -55,7 +55,7 @@ public class Day implements Comparable {
                         mul = 3600;
                     if (mul > 1)
                         time = time.substring(0, time.length() - 1);
-                    act.setSeconds(mul * Integer.parseInt(time));
+                    act.setSeconds(Math.round(mul * Float.parseFloat(time)));
                 }
                 if (a.length > 2)
                     act.setText(a[2]);

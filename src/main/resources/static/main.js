@@ -214,7 +214,7 @@ $(function() {
                             mul = 3600;
                         if (mul > 1)
                             time = time.substring(0, time.length - 1);
-                        var sec = parseInt(time) * mul;
+                        var sec = Math.round(parseFloat(time) * mul);
                         if (!isNaN(sec))
                             workTime += sec;
                     }
