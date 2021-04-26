@@ -458,7 +458,7 @@ $(function() {
             else {
                 var ar;
                 if (rows.length == 0) rows.push(ar = $('<tr/>').appendTo(t)); else ar = rows[0];
-                var td = $('<td/>').text(day.activities[j]).appendTo(ar).attr('rowspan', maxRows);
+                var td = $('<td style="border: 1px solid #333366; padding: 3px 7px; vertical-align: top;"/>').text(day.activities[j]).appendTo(ar).attr('rowspan', maxRows);
             }
 
         }
