@@ -100,7 +100,8 @@ $(function() {
                 descr.val('');
                 set('activities', def(day.activities) && day.activities.length > 0 ? day.activities + '\n' + act : act, day);
                 $('.rep-sum-d' + day.day + ' textarea').val(day.activities);
-                resetClock();
+                if (def(sec))
+                    resetClock();
             }
             else {
                 showError('Cannot edit: ' + curDay());
